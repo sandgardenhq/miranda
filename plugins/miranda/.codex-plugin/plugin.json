@@ -1,0 +1,29 @@
+{
+  "name": "miranda",
+  "version": "0.1.0",
+  "description": "Track coding-agent token cost and attribute it to GitHub issues, via the gloria.dev MCP server's scoped /miranda tools.",
+  "author": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "homepage": "https://miranda.finance",
+  "repository": "https://github.com/sandgardenhq/miranda",
+  "license": "MIT",
+  "keywords": [
+    "token-cost",
+    "usage-tracking",
+    "miranda",
+    "cost-attribution"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp-codex.json",
+  "interface": {
+    "displayName": "Miranda",
+    "shortDescription": "Token-cost tracking + per-issue attribution",
+    "longDescription": "Track coding-agent token usage on this machine and attribute cost to the GitHub issues the work was for, via the gloria.dev MCP server's scoped /miranda tools.",
+    "developerName": "Sandgarden, Inc.",
+    "category": "Productivity",
+    "websiteURL": "https://miranda.finance"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "miranda",
+  "owner": {
+    "name": "Sandgarden, Inc.",
+    "email": "gloria@sandgarden.com"
+  },
+  "metadata": {
+    "description": "Miranda plugins for Claude Code — token-usage tracking skill wired to the gloria.dev MCP server's scoped /miranda tools."
+  },
+  "plugins": [
+    {
+      "name": "miranda",
+      "source": "./plugins/miranda",
+      "description": "Track coding-agent token cost and attribute it to GitHub issues via Miranda, without installing the gloria plugin.",
+      "version": "0.1.0"
+    }
+  ]
+}

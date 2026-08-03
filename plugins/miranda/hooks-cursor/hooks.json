@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "stop": [{ "command": "./run-hook-cursor.sh" }],
+    "sessionStart": [{ "command": "./run-hook-cursor.sh" }],
+    "sessionEnd": [{ "command": "./run-hook-cursor.sh" }]
+  }
+}

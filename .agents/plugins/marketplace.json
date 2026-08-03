@@ -1,0 +1,20 @@
+{
+  "name": "miranda",
+  "interface": {
+    "displayName": "Miranda"
+  },
+  "plugins": [
+    {
+      "name": "miranda",
+      "source": {
+        "source": "local",
+        "path": "./plugins/miranda"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
