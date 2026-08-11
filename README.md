@@ -6,7 +6,7 @@
 
 ---
 
-This is the plugin marketplace for **[Miranda](https://miranda.finance)** —
+This is the plugin marketplace for **[Miranda](https://miranda.fi)** —
 the token-cost tracking product built on [gloria.dev](https://gloria.dev)'s
 platform. One repo serves multiple coding agents —
 [Claude Code](https://docs.claude.com/en/docs/claude-code/plugins),
@@ -147,7 +147,7 @@ update gloria before or alongside installing this one:
 
 ## Links
 
-- Miranda — <https://miranda.finance>
+- Miranda — <https://miranda.fi>
 - gloria.dev — <https://gloria.dev>
 - MCP server — <https://mcp.gloria.dev/miranda>
 

@@ -35,7 +35,7 @@ and replace the section instead of duplicating it.
 
 ## Miranda
 
-This project uses [Miranda](https://miranda.finance) to track coding-agent
+This project uses [Miranda](https://miranda.fi) to track coding-agent
 token cost and attribute it to the GitHub issues the work was for.
 
 Before starting work in this repo, read `.miranda/USING-MIRANDA.md`. It

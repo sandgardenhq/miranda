@@ -1,6 +1,6 @@
 # Using Miranda
 
-[Miranda](https://miranda.finance) tracks coding-agent token cost and
+[Miranda](https://miranda.fi) tracks coding-agent token cost and
 attributes it to the GitHub issues the work was actually for. This project
 has adopted Miranda: the triggers below are commitments the team has made,
 not suggestions. When a trigger matches the task you are doing, take the
