@@ -1,6 +1,6 @@
 {
   "name": "miranda",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Track coding-agent token cost and attribute it to GitHub issues, via the gloria.dev MCP server's scoped /miranda tools.",
   "author": {
     "name": "Sandgarden, Inc.",
