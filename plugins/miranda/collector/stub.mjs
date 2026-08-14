@@ -42,8 +42,8 @@ import { pathToFileURL } from "node:url"
 // "miranda-collector") into its copy, so two plugins installed on the same
 // machine cache and download distinctly-named binaries under the same
 // shared ~/.gloria/bin/ directory without colliding.
-export const BUILD_VERSION = "ccd5c2c3d884"
-export const RELEASE_TAG = "collector-ccd5c2c3d884"
+export const BUILD_VERSION = "70eff2d2465c"
+export const RELEASE_TAG = "collector-70eff2d2465c"
 export const RELEASE_REPO = "sandgardenhq/miranda"
 export const ASSET_PREFIX = "miranda-collector"
 export const CHECKSUMS = {
