@@ -1,6 +1,6 @@
 {
   "name": "miranda",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "description": "Miranda OpenCode plugin — token-usage tracking skill + the gloria.dev MCP server's scoped /miranda tools.",
   "homepage": "https://miranda.fi",
