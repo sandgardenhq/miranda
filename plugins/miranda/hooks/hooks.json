@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "command -v node >/dev/null 2>&1 && [ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.mjs\" ] && node \"${CLAUDE_PLUGIN_ROOT}/collector/stub.mjs\" hook-session-start || true"
+            "command": "command -v node >/dev/null 2>&1 && [ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.mjs\" ] && GLORIA_HOOK_SOURCE=miranda node \"${CLAUDE_PLUGIN_ROOT}/collector/stub.mjs\" hook-session-start || true"
           }
         ]
       }
