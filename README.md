@@ -58,16 +58,26 @@ noted.
 
 ### Claude Code
 
-```bash
+```text
 /plugin marketplace add sandgardenhq/miranda
 /plugin install miranda@miranda
+/mcp                       # complete sign-in for the "miranda" server
 ```
 
 The first command registers this marketplace; the second installs the
 `miranda` plugin (its skill, collector hooks, and the scoped gloria.dev MCP
-server). Restart Claude Code if prompted. The first MCP call opens a
-one-time browser sign-in. Then ask your agent to "set up usage tracking in
-this repo" to wire it into your project.
+server) — restart Claude Code if prompted. `/mcp` completes the one-time
+OAuth sign-in.
+
+Now ask your agent:
+
+```text
+Set up usage tracking in this repo
+```
+
+That invokes the `setting-up-usage-tracking` skill, which wires
+`.miranda/USING-MIRANDA.md` into your project and mints this machine's
+usage-collector credential.
 
 ### OpenAI Codex
 
@@ -82,6 +92,16 @@ complete the one-time OAuth handshake with the remote MCP server:
 codex mcp login miranda                             # in your shell
 ```
 
+Now ask your agent:
+
+```text
+Set up usage tracking in this repo
+```
+
+That invokes the `setting-up-usage-tracking` skill, which wires
+`.miranda/USING-MIRANDA.md` into your project and mints this machine's
+usage-collector credential.
+
 ### OpenCode
 
 OpenCode has no marketplace — add Miranda as a plugin in your `opencode.json`
@@ -94,8 +114,18 @@ OpenCode has no marketplace — add Miranda as a plugin in your `opencode.json`
 
 OpenCode installs the plugin, which registers the setup skill, the scoped
 MCP server, and the collector sweep on session start/idle. The first MCP
-call opens a one-time browser sign-in. Pin a version with a git ref
-(`…/miranda.git#v0.1.0`).
+call opens a one-time browser sign-in — follow OpenCode's own MCP auth
+prompt. Pin a version with a git ref (`…/miranda.git#v0.1.0`).
+
+Now ask your agent:
+
+```text
+Set up usage tracking in this repo
+```
+
+That invokes the `setting-up-usage-tracking` skill, which wires
+`.miranda/USING-MIRANDA.md` into your project and mints this machine's
+usage-collector credential.
 
 ### Cursor
 
@@ -115,6 +145,16 @@ Open Cursor's Customize sidebar → Plugins and enable **miranda** if it isn't
 already on. The first MCP call opens a one-time browser sign-in. Note:
 Cursor's hooks are wired but currently report no usage data — Cursor's local
 session storage doesn't carry reliable token counts yet.
+
+Now ask your agent:
+
+```text
+Set up usage tracking in this repo
+```
+
+That invokes the `setting-up-usage-tracking` skill, which wires
+`.miranda/USING-MIRANDA.md` into your project and mints this machine's
+usage-collector credential.
 
 If your org is on a Cursor Team or Enterprise plan, an admin can instead
 import this repo once for everyone: Dashboard → Settings → Plugins → Team

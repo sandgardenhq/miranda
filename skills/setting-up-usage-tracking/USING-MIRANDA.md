@@ -107,18 +107,31 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
 
 **Codex:** the Codex plugin manifest (`.codex-plugin/plugin.json`) declares
 the same `Stop`/`SessionStart` hooks Claude Code uses, pointing at the same
-collector. This should auto-wire usage collection the moment the Miranda
-plugin is installed through Codex's plugin marketplace — but it has not been
-empirically confirmed against a live Codex install, so treat it as
-expected-but-unverified rather than a guarantee. As a manual fallback (or on
-a Codex-only machine that hasn't installed the plugin), point `notify` in
-`~/.codex/config.toml` at the collector download stub directly:
+collector. Codex's own hooks documentation describes `Stop` as a genuine
+turn-level event, distinct from `SessionStart`, with a payload shape
+(`session_id`/`transcript_path`/`cwd`) that matches Claude Code's — so once
+that plugin path fires, `hook-stop` handles it correctly: it detects a Codex
+rollout file by name and parses it with the Codex parser instead of Claude
+Code's. This is still not empirically confirmed against a live Codex
+install, so treat it as expected-but-unverified rather than a guarantee.
+
+As a manual fallback (or on a Codex-only machine that hasn't installed the
+plugin), point `notify` in `~/.codex/config.toml` at the collector download
+stub directly:
 
 ```toml
-notify = ["node", "/path/to/plugins/miranda/collector/stub.mjs", "hook-session-start"]
+notify = ["node", "/path/to/plugins/miranda/collector/stub.mjs", "hook-notify"]
 ```
 
-(The collector accepts and ignores Codex's JSON argv payload.)
+`notify` fires on every turn completion and carries a `thread-id` +
+`cwd` JSON payload. `hook-notify` resolves the one rollout file for that
+`thread-id` and syncs only it — the same lightweight, single-file path
+`hook-stop` gives Claude Code, never the full multi-source sweep. A
+malformed payload, or a `thread-id` with no matching rollout file yet (e.g.
+the very first turn of a brand new session), falls back to the full sweep
+automatically, so this is always at least as correct as pointing `notify` at
+`hook-session-start` directly — which still works, just does more work than
+necessary on every turn.
 
 **OpenCode:** the Miranda OpenCode plugin (`.opencode/plugins/miranda.js`)
 wires `session.created` and `session.idle` to trigger the same collector
