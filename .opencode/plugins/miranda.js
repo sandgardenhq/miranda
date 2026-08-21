@@ -12,12 +12,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const skillsDir = path.resolve(__dirname, "../../skills")
 
 // The collector download stub is shared with the Claude Code/Codex plugin,
-// staged at the published repo's plugins/miranda/collector/stub.mjs (never
+// staged at the published repo's plugins/miranda/collector/stub.sh (never
 // committed under the monorepo's true root — see
 // publish-miranda-marketplace.yml). In the monorepo checkout this path does
 // not exist, so triggerCollectorSweep's existsSync guard silently no-ops
 // during local dev.
-const collectorStubPath = path.resolve(__dirname, "../../plugins/miranda/collector/stub.mjs")
+const collectorStubPath = path.resolve(__dirname, "../../plugins/miranda/collector/stub.sh")
 
 /**
  * Mutate an OpenCode config object to wire up Miranda: register the bundled
@@ -47,11 +47,16 @@ export function applyMirandaConfig(config, dir = skillsDir) {
  * download a ~50 MB collector binary — so the child is detached and unref'd
  * rather than awaited, and every failure (missing stub, spawn error) is
  * swallowed: a collector bug must never block or slow an OpenCode session.
+ *
+ * The stub is POSIX sh, not node (#761) — the collector must not require a
+ * JS runtime on the host. On Windows that needs `sh` on PATH (Git for
+ * Windows' Unix tools); without it the spawn errors and is swallowed, the
+ * same silent no-op a missing `node` produced before.
  */
 export function triggerCollectorSweep(spawnImpl = spawn, stubPath = collectorStubPath) {
   try {
     if (!fs.existsSync(stubPath)) return
-    const child = spawnImpl("node", [stubPath, "hook-session-start"], {
+    const child = spawnImpl("sh", [stubPath, "hook-session-start"], {
       detached: true,
       stdio: "ignore",
     })

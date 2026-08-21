@@ -120,7 +120,7 @@ plugin), point `notify` in `~/.codex/config.toml` at the collector download
 stub directly:
 
 ```toml
-notify = ["node", "/path/to/plugins/miranda/collector/stub.mjs", "hook-notify"]
+notify = ["sh", "/path/to/plugins/miranda/collector/stub.sh", "hook-notify"]
 ```
 
 `notify` fires on every turn completion and carries a `thread-id` +
