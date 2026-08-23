@@ -59,9 +59,18 @@ commitment the team has made, not a suggestion.
   - `.miranda/USING-MIRANDA.md` — present?
   - `CLAUDE.md`, `AGENTS.md` — which exist, and does each already contain a
     `<!-- miranda:start -->` ... `<!-- miranda:end -->` block?
-  - `~/.gloria/config.json` — present? (per-machine, not per-repo; if it
-    already exists, usage tracking is already enabled on this machine and
-    step 5 is a no-op — say so rather than re-minting a key.)
+  - The collector's `config.json` — present? Look in **both** places, in
+    this order:
+    1. `$XDG_CONFIG_HOME/sandgarden/config.json`, defaulting to
+       `~/.config/sandgarden/config.json` when `XDG_CONFIG_HOME` is unset;
+    2. `~/.gloria/config.json` — the pre-rename location. A machine set up
+       before the rename still has its credential here; the collector
+       migrates it automatically on its next run, so this counts as
+       "already enabled" too.
+
+    Either one present means usage tracking is already enabled on this
+    machine (per-machine, not per-repo) and step 5 is a no-op — say so
+    rather than re-minting a key.
 
 ### 2. Propose and ask permission — once
 
@@ -99,15 +108,17 @@ If neither file exists, create `AGENTS.md` containing only the section
 
 ### 5. Enable token-usage tracking
 
-If `~/.gloria/config.json` doesn't already exist (checked in step 1):
+If the collector has no `config.json` in **either** location (checked in
+step 1):
 
 1. Call the `miranda` MCP tool **`enable_usage_tracking`** (optionally
    passing `machineLabel`, e.g. the machine's hostname, if the user consents
    to naming the key). It mints a write-only, org-scoped Clerk API key and
    returns `{ apiBaseUrl, ingestToken }` plus write instructions.
-2. Write `~/.gloria/config.json` (per-machine, not per-repo — shared with
-   the gloria plugin if it's also installed) directly from the tool result —
-   merge with any existing keys in the file:
+2. Write `$XDG_CONFIG_HOME/sandgarden/config.json` — `~/.config/sandgarden/config.json`
+   when `XDG_CONFIG_HOME` is unset — directly from the tool result, merging
+   with any existing keys in the file. The directory is per-machine, not
+   per-repo, and shared with the gloria plugin if that's also installed:
 
    ```json
    {
@@ -128,7 +139,8 @@ If `~/.gloria/config.json` doesn't already exist (checked in step 1):
    gloria-registered repos as the developer has checked out. The collector
    needs no runtime install: the plugin's first hook fire downloads a
    compiled, checksum-verified collector binary for this platform (~50 MB,
-   once per collector release) and caches it under `~/.gloria/bin/`.
+   once per collector release) and caches it under `bin/` in that same
+   directory.
 
    **Manual fallback (MCP not connected on this machine):** any org member
    can mint the key from a machine that _does_ have the `miranda` MCP server
@@ -158,14 +170,15 @@ changes, e.g. `chore: wire miranda agent doc into instruction files`.
   rest, and mention it.
 - Never touch anything outside the marker block in an instruction file, and
   never edit any other file.
-- Never re-mint a usage-tracking credential when `~/.gloria/config.json`
-  already exists — offer to add `machineLabel` or rotate only if the user
-  asks.
+- Never re-mint a usage-tracking credential when the collector already has a
+  `config.json` in either location from step 1 (including the pre-rename
+  `~/.gloria/config.json`) — offer to add `machineLabel` or rotate only if
+  the user asks.
 
 ## When to suggest this skill proactively
 
 - The user just installed the Miranda plugin in a repo with no
   `.miranda/USING-MIRANDA.md` → offer initial setup.
 - The user asks about token cost, usage tracking, or per-issue cost
-  attribution and this repo has no `~/.gloria/config.json` → offer to set it
-  up.
+  attribution and this machine has no collector `config.json` in either
+  location → offer to set it up.

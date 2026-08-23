@@ -13,8 +13,9 @@ Miranda is available two ways, and both apply to you:
   `get_info`/`register_project`/`put_project_github_info` — the same rows the
   `gloria` server exposes, since Miranda and gloria share one database).
 - **The usage-collector hooks** installed with the Miranda plugin (Claude
-  Code, Codex, OpenCode) — they run automatically once
-  `~/.gloria/config.json` exists; see "Setting up usage tracking" below.
+  Code, Codex, OpenCode) — they run automatically once the collector's
+  `config.json` exists (in `$XDG_CONFIG_HOME/sandgarden`, defaulting to
+  `~/.config/sandgarden`); see "Setting up usage tracking" below.
 
 ## Start of every session
 
@@ -56,9 +57,9 @@ The Miranda plugin ships hooks (Claude Code, Codex, OpenCode) that transmit
 **token usage only** (model names, token counts, timestamps, session ids, and
 a locally-minted random machine UUID — never message content, prompts, or
 code). Cursor's hooks are wired too but are currently a no-op — see the
-Cursor note below. They are inert until `~/.gloria/config.json` exists, so
-offer to set it up if it doesn't — the `setting-up-usage-tracking` skill
-drives this end to end.
+Cursor note below. They are inert until that `config.json` exists, so offer
+to set it up if it doesn't — the `setting-up-usage-tracking` skill drives
+this end to end.
 
 ## MCP tools reference
 

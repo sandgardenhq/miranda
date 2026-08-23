@@ -13,14 +13,14 @@
 #
 # It downloads the compiled collector binary for this platform once per build
 # version from the published repo's GitHub Release, verifies it against the
-# SHA-256 checksums stamped below at publish time, caches it under
-# ~/.gloria/bin/, and runs it with argv + stdin passed through, mirroring its
-# exit code.
+# SHA-256 checksums stamped below at publish time, caches it under the
+# collector's state directory (`bin/`), and runs it with argv + stdin passed
+# through, mirroring its exit code.
 #
 # Contract (it runs inside the agent loop, like the hooks it fronts):
 # - ANY failure — offline, GitHub down, unsupported platform, checksum
-#   mismatch, no curl, no hashing tool — logs ONE line to
-#   ~/.gloria/collector.log and exits 0. The next hook fire retries. It must
+#   mismatch, no curl, no hashing tool — logs ONE line to the state
+#   directory's collector.log and exits 0. The next hook fire retries. It must
 #   never break an agent session.
 # - Checksum mismatch NEVER executes the downloaded bytes: the stamped
 #   checksums are the trust anchor (a substituted release asset fails closed),
@@ -47,17 +47,17 @@
 # workflow stamps its own repo ("sandgardenhq/gloria" / "sandgardenhq/miranda")
 # and asset-name prefix ("gloria-collector" / "miranda-collector") into its
 # copy, so two plugins installed on the same machine cache and download
-# distinctly-named binaries under the same shared ~/.gloria/bin/ directory
+# distinctly-named binaries under the same shared state directory's bin/
 # without colliding.
-BUILD_VERSION="c4773b05e2e5"
-RELEASE_TAG="collector-c4773b05e2e5"
+BUILD_VERSION="61cb795ff2e9"
+RELEASE_TAG="collector-61cb795ff2e9"
 RELEASE_REPO="sandgardenhq/miranda"
 ASSET_PREFIX="miranda-collector"
-CHECKSUM_DARWIN_ARM64="392847cdc3a38ca6179075dbe084eb94a478cae16475bdd04181c7be45a01862"
-CHECKSUM_DARWIN_X64="222bf604add9a5e6e6fc5d1029ee37f7514f880e0760b83ac801e68b8ed17db2"
-CHECKSUM_LINUX_X64="53878e6b7cac51306d5e601dd7c9c4ea5b8e54922f01a56d73c920b545b5ea31"
-CHECKSUM_LINUX_ARM64="8fc15a428de8abe9ddfc27b8d92125163c48269ab266d4e1872b3bcf34d010a8"
-CHECKSUM_WINDOWS_X64="446debdf04e26a37391477da006f9d2538830bd8e087f54e65f4da800cf5af85"
+CHECKSUM_DARWIN_ARM64="c345d3395aaf7d0b5a19259d05415334e43318d6ef8dd8b8f4d9c05623632fef"
+CHECKSUM_DARWIN_X64="b83b117ec98262a1eb6a6353be857d99c9ee622156e864cdd0fa45eed33ac433"
+CHECKSUM_LINUX_X64="12387f6eed22e1d030005548fd4976b8ab9200e0e8b4598ac9392fd186a43494"
+CHECKSUM_LINUX_ARM64="7774815303e3c30483289c437649d4b8781d69a561b33b942c3d9622b752c73d"
+CHECKSUM_WINDOWS_X64="1c6fb004251e5d763ce612ac90d67e3fab4b455144cb4f64075217148f3da4d8"
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
@@ -69,24 +69,56 @@ DOWNLOAD_TEMP_STALE_MINUTES=60
 LOG_MAX_BYTES=1048576
 CURL_MAX_SECONDS=600
 
-# ~/.gloria, honoring GLORIA_HOME like the collector's state.ts (including
-# "~/" expansion — hook configs and env files don't shell-expand).
-gloria_home() {
-  gh_value="${GLORIA_HOME-}"
-  if [ -z "$gh_value" ]; then
-    printf '%s' "$HOME/.gloria"
-    return 0
-  fi
-  case "$gh_value" in
-    "~/"*) printf '%s' "$HOME/${gh_value#\~/}" ;;
-    *) printf '%s' "$gh_value" ;;
+# The pre-#783 state directory, kept only as a migration source.
+LEGACY_HOME_DIR_NAME=".gloria"
+
+# Shells expand a leading "~" before we ever see it — hook configs and env
+# files don't, so we have to.
+expand_tilde() {
+  case "$1" in
+    "~/"*) printf '%s' "$HOME/${1#\~/}" ;;
+    *) printf '%s' "$1" ;;
   esac
 }
 
-# Append one line to ~/.gloria/collector.log (rotating once past 1 MB, like
-# the collector's own logger). Logging must never fail — exit 0 still holds.
+# The explicit full-path override in effect; returns 1 (printing nothing) when
+# there is none. GLORIA_HOME is the deprecated alias of SANDGARDEN_HOME — it
+# names one of the two products sharing this directory, which is exactly what
+# #783 fixes, but a user who set it deliberately chose that path and must not
+# have their state silently relocated. Empty reads as unset.
+home_override() {
+  if [ -n "${SANDGARDEN_HOME-}" ]; then
+    expand_tilde "$SANDGARDEN_HOME"
+    return 0
+  fi
+  if [ -n "${GLORIA_HOME-}" ]; then
+    expand_tilde "$GLORIA_HOME"
+    return 0
+  fi
+  return 1
+}
+
+# Mirrors state.ts's collectorHome(), which this file has to duplicate rather
+# than share: the directory must be resolved before the binary that would
+# resolve it exists. Precedence:
+#   SANDGARDEN_HOME | GLORIA_HOME | $XDG_CONFIG_HOME/sandgarden | ~/.config/sandgarden
+collector_home() {
+  if ch_override="$(home_override)"; then
+    printf '%s' "$ch_override"
+    return 0
+  fi
+  if [ -n "${XDG_CONFIG_HOME-}" ]; then
+    printf '%s/sandgarden' "$(expand_tilde "$XDG_CONFIG_HOME")"
+  else
+    printf '%s/.config/sandgarden' "$HOME"
+  fi
+}
+
+# Append one line to the state directory's collector.log (rotating once past
+# 1 MB, like the collector's own logger). Logging must never fail — exit 0
+# still holds.
 log_error() {
-  le_home="$(gloria_home)"
+  le_home="$(collector_home)"
   mkdir -p "$le_home" 2>/dev/null || return 0
   le_log="$le_home/collector.log"
   if [ -f "$le_log" ]; then
@@ -198,6 +230,33 @@ acquire_download_lock() {
   return 1
 }
 
+# Reuse the binary a pre-#783 install already cached under ~/.gloria/bin,
+# instead of re-downloading it (#783) — an offline machine has to keep working
+# across the rename. Returns 0 when $1 is ready to execute.
+#
+# Only THIS copy's own stamped asset name is considered, so an entry cached by
+# a differently-stamped stub sharing the legacy bin/ (gloria's and Miranda's
+# plugins both installed) is left exactly where its owner expects it. Copy
+# rather than move, for the same reason: a sibling plugin that hasn't updated
+# yet may still be running from it. Skipped when the directory was pinned
+# explicitly — that path was chosen deliberately. Best-effort and silent: any
+# failure just falls through to the normal download.
+migrate_cached_binary() {
+  mcb_bin="$1"
+  home_override >/dev/null && return 1
+  mcb_legacy="$HOME/$LEGACY_HOME_DIR_NAME/bin/${mcb_bin##*/}"
+  [ -f "$mcb_legacy" ] || return 1
+  mkdir -p "${mcb_bin%/*}" 2>/dev/null || return 1
+  mcb_tmp="$mcb_bin.migrate-$$"
+  if cp "$mcb_legacy" "$mcb_tmp" 2>/dev/null &&
+    chmod 755 "$mcb_tmp" 2>/dev/null &&
+    mv -f "$mcb_tmp" "$mcb_bin" 2>/dev/null; then # atomic: no partial file is ever executed
+    return 0
+  fi
+  rm -f "$mcb_tmp" 2>/dev/null || :
+  return 1
+}
+
 # Download the asset to a temp file, verify its SHA-256 against the stamped
 # checksum, then atomically rename into place. Returns 0 when $1 is ready to
 # execute; 1 (after logging, except on a silent lock deferral) otherwise. The
@@ -298,13 +357,13 @@ run_binary() {
 # the one just run, plus any stranded *.download-* temp file older than an
 # hour. Best-effort: pruning must not fail the hook. Only files carrying THIS
 # copy's stamped asset prefix are considered, so a binary cached by a
-# differently-stamped copy sharing the same ~/.gloria/bin/ (e.g. gloria's and
-# Miranda's plugins both installed) is never touched.
+# differently-stamped copy sharing the same bin/ (e.g. gloria's and Miranda's
+# plugins both installed) is never touched.
 prune_cache() {
   pc_dir="$1"
   pc_keep="$2"
   [ -d "$pc_dir" ] || return 0
-  find "$pc_dir" -maxdepth 1 -name '*.download-*' \
+  find "$pc_dir" -maxdepth 1 \( -name '*.download-*' -o -name '*.migrate-*' \) \
     -mmin "+$DOWNLOAD_TEMP_STALE_MINUTES" -exec rm -f {} + 2>/dev/null || :
   pc_kept=0
   # Cache entries are <prefix>-<hex> — no whitespace — so word splitting on
@@ -317,7 +376,7 @@ prune_cache() {
       *) continue ;;
     esac
     case "$pc_name" in
-      *.download-*) continue ;;
+      *.download-* | *.migrate-*) continue ;;
     esac
     if [ "$pc_kept" -lt 2 ]; then
       pc_kept=$((pc_kept + 1))
@@ -358,10 +417,12 @@ main() {
     exit 0
   fi
 
-  m_bin_dir="$(gloria_home)/bin"
+  m_bin_dir="$(collector_home)/bin"
   m_bin="$m_bin_dir/$ASSET_PREFIX-$BUILD_VERSION$ASSET_EXT"
   if [ ! -f "$m_bin" ]; then
-    download_binary "$m_bin" || exit 0 # logged inside (or a silent lock deferral)
+    migrate_cached_binary "$m_bin" ||
+      download_binary "$m_bin" ||
+      exit 0 # logged inside (or a silent lock deferral)
   fi
   run_binary "$m_bin" "$@"
   m_status=$?

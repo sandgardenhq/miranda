@@ -7,7 +7,7 @@
 ---
 
 This is the plugin marketplace for **[Miranda](https://miranda.fi)** —
-the token-cost tracking product built on [gloria.dev](https://gloria.dev)'s
+Sandgarden's token-cost tracking product, built on [gloria.dev](https://gloria.dev)'s
 platform. One repo serves multiple coding agents —
 [Claude Code](https://docs.claude.com/en/docs/claude-code/plugins),
 [OpenAI Codex](https://developers.openai.com/codex/plugins),
@@ -173,8 +173,12 @@ update gloria before or alongside installing this one:
 2. Add this marketplace and install `miranda` using the
    [Install](#install) commands for your agent.
 3. Run `setting-up-usage-tracking` (or ask your agent to "set up usage
-   tracking") to re-wire the credential — the same `~/.gloria/config.json`
-   both plugins share, so if it already exists nothing needs re-minting.
+   tracking") to re-wire the credential — the same `config.json` both plugins
+   share (in `$XDG_CONFIG_HOME/sandgarden`, defaulting to
+   `~/.config/sandgarden`), so if it already exists nothing needs re-minting.
+   A machine set up before that directory was renamed still has its
+   credential in `~/.gloria/`; the collector copies it across automatically
+   on its next run, so that counts as already-enabled too.
 
 ## Updating
 
