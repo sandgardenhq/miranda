@@ -6,7 +6,7 @@
 
 ---
 
-This is the plugin marketplace for **[Miranda](https://miranda.fi)** —
+This is the plugin marketplace for **[Miranda](https://miranda.co)** —
 Sandgarden's token-cost tracking product, built on [gloria.dev](https://gloria.dev)'s
 platform. One repo serves multiple coding agents —
 [Claude Code](https://docs.claude.com/en/docs/claude-code/plugins),
@@ -191,7 +191,7 @@ update gloria before or alongside installing this one:
 
 ## Links
 
-- Miranda — <https://miranda.fi>
+- Miranda — <https://miranda.co>
 - gloria.dev — <https://gloria.dev>
 - MCP server — <https://mcp.gloria.dev/miranda>
 
