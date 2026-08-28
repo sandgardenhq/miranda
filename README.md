@@ -9,8 +9,8 @@
 This is the plugin marketplace for **[Miranda](https://miranda.co)** —
 Sandgarden's token-cost tracking product, built on [gloria.dev](https://gloria.dev)'s
 platform. One repo serves multiple coding agents —
-[Claude Code](https://docs.claude.com/en/docs/claude-code/plugins),
-[OpenAI Codex](https://developers.openai.com/codex/plugins),
+[Claude Code](https://code.claude.com/docs/en/plugins),
+[OpenAI Codex](https://learn.chatgpt.com/docs/plugins),
 [OpenCode](https://opencode.ai), and [Cursor](https://cursor.com) — from a
 single published source. Install the `miranda` plugin and your agent gets
 the usage-tracking setup skill, the token-usage collector hooks, and the
@@ -66,8 +66,8 @@ noted.
 
 The first command registers this marketplace; the second installs the
 `miranda` plugin (its skill, collector hooks, and the scoped gloria.dev MCP
-server) — restart Claude Code if prompted. `/mcp` completes the one-time
-OAuth sign-in.
+server). If the install summary says `Run /reload-plugins to activate.`, run
+that. `/mcp` completes the one-time OAuth sign-in.
 
 Now ask your agent:
 
@@ -85,12 +85,16 @@ usage-collector credential.
 codex plugin marketplace add sandgardenhq/miranda   # in your shell
 ```
 
-Then, inside Codex, run `/plugins` and install **miranda**. Finally,
+Then, inside Codex, run `/plugins` and install **miranda**, and start a new
+session — a plugin's skills and tools load at session start. Finally,
 complete the one-time OAuth handshake with the remote MCP server:
 
 ```bash
 codex mcp login miranda                             # in your shell
 ```
+
+Install from the Codex CLI or the ChatGPT desktop app. [Codex's IDE extension
+does not support plugins.](https://learn.chatgpt.com/docs/plugins)
 
 Now ask your agent:
 
@@ -133,18 +137,31 @@ Cursor shipped its own plugin marketplace in February 2026 (Cursor 2.5), and
 this repo ships a real Cursor plugin (`.cursor-plugin/`) bundling the same
 skill and MCP server as the Claude/Codex plugin. Cursor has no
 individual-user self-service "add a marketplace repo" command yet, so clone
-this repo and symlink the plugin into Cursor's local plugins directory:
+this repo and copy the plugin into Cursor's local plugins directory. Re-run
+the same commands to update:
 
 ```bash
 git -C ~/.cursor/plugins/sources/miranda pull || git clone https://github.com/sandgardenhq/miranda.git ~/.cursor/plugins/sources/miranda
 mkdir -p ~/.cursor/plugins/local
-ln -sf ~/.cursor/plugins/sources/miranda/plugins/miranda ~/.cursor/plugins/local/miranda
+rm -rf ~/.cursor/plugins/local/miranda
+cp -R ~/.cursor/plugins/sources/miranda/plugins/miranda ~/.cursor/plugins/local/miranda
 ```
 
-Open Cursor's Customize sidebar → Plugins and enable **miranda** if it isn't
-already on. The first MCP call opens a one-time browser sign-in. Note:
-Cursor's hooks are wired but currently report no usage data — Cursor's local
-session storage doesn't carry reliable token counts yet.
+Copy rather than symlink. [Cursor's docs recommend a
+symlink](https://cursor.com/docs/plugins), but Cursor does not load a
+symlinked local plugin — see [cursor/plugins#35](https://github.com/cursor/plugins/issues/35),
+still open. A real directory works.
+
+Restart Cursor or run **Developer: Reload Window**, then open Cursor's
+Customize sidebar and enable **miranda** if it isn't already on. The first MCP
+call opens a one-time browser sign-in.
+
+On a Team or Enterprise plan, Cursor discovers a local plugin only while
+**Allow Local Plugin Imports** is on (Dashboard → Settings → Security &
+Identity → Marketplace and Plugins); it is off by default on Enterprise.
+
+Note: Cursor's hooks are wired but currently report no usage data — Cursor's
+local session storage doesn't carry reliable token counts yet.
 
 Now ask your agent:
 
@@ -157,8 +174,8 @@ That invokes the `setting-up-usage-tracking` skill, which wires
 usage-collector credential.
 
 If your org is on a Cursor Team or Enterprise plan, an admin can instead
-import this repo once for everyone: Dashboard → Settings → Plugins → Team
-Marketplaces → Import → `sandgardenhq/miranda`.
+import this repo once for everyone: Dashboard → Plugins → Team Marketplaces →
+**Add Marketplace** → **Import from Repo** → `sandgardenhq/miranda`.
 
 ## Migrating from the gloria marketplace
 
@@ -187,7 +204,7 @@ update gloria before or alongside installing this one:
 | Claude Code  | `/plugin marketplace update miranda` then `/reload-plugins` |
 | OpenAI Codex | `codex plugin marketplace upgrade miranda` (restart Codex)  |
 | OpenCode     | `rm -rf ~/.cache/opencode/node_modules/miranda` and restart |
-| Cursor       | `git -C ~/.cursor/plugins/sources/miranda pull`             |
+| Cursor       | Re-run the [Cursor install commands](#cursor) (pull + copy) |
 
 ## Links
 
