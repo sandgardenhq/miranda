@@ -12,7 +12,7 @@
       "name": "miranda",
       "source": "./plugins/miranda",
       "description": "Track coding-agent token cost and attribute it to GitHub issues via Miranda, without installing the gloria plugin.",
-      "version": "0.1.26"
+      "version": "0.1.27"
     }
   ]
 }
