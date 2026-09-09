@@ -111,10 +111,17 @@ If neither file exists, create `AGENTS.md` containing only the section
 If the collector has no `config.json` in **either** location (checked in
 step 1):
 
-1. Call the `miranda` MCP tool **`enable_usage_tracking`** (optionally
-   passing `machineLabel`, e.g. the machine's hostname, if the user consents
-   to naming the key). It mints a write-only, org-scoped Clerk API key and
-   returns `{ apiBaseUrl, ingestToken }` plus write instructions.
+1. Call the `miranda` MCP tool **`enable_usage_tracking`**, always passing a
+   `machineLabel` — never omit it. Clerk key names must be unique per org,
+   and omitting `machineLabel` falls back to a non-unique default name, so a
+   second machine (or a re-run after a partial failure) collides with an
+   already-minted key and the call fails with a Clerk `409 token_creation_conflict`.
+   Generate a default that's unique per machine, e.g. the hostname plus a
+   short random or timestamp suffix (`<hostname>-<4 random hex chars>`), and
+   use that unless the user asks for a friendlier label — if they supply
+   one, keep it unique the same way (append a short suffix) rather than
+   passing their label bare. It mints a write-only, org-scoped Clerk API key
+   and returns `{ apiBaseUrl, ingestToken }` plus write instructions.
 2. Write `$XDG_CONFIG_HOME/sandgarden/config.json` — `~/.config/sandgarden/config.json`
    when `XDG_CONFIG_HOME` is unset — directly from the tool result, merging
    with any existing keys in the file. The directory is per-machine, not
