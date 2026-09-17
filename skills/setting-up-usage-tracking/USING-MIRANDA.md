@@ -54,9 +54,10 @@ recent call always wins.
 ## Setting up usage tracking
 
 The Miranda plugin ships hooks (Claude Code, Codex, OpenCode) that transmit
-**token usage only** (model names, token counts, timestamps, session ids, and
-a locally-minted random machine UUID — never message content, prompts, or
-code). Cursor's hooks are wired too but are currently a no-op — see the
+**token usage only** (model names, token counts, timestamps, session ids, a
+locally-minted random machine UUID, and this machine's hostname, OS and
+architecture so machines are distinguishable in the dashboard — never message
+content, prompts, or code). Cursor's hooks are wired too but are currently a no-op — see the
 Cursor note below. They are inert until that `config.json` exists, so offer
 to set it up if it doesn't — the `setting-up-usage-tracking` skill drives
 this end to end.
