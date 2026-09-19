@@ -9,7 +9,9 @@ corresponding action.
 Miranda is available two ways, and both apply to you:
 
 - **MCP tools** on the `miranda` server (`tag_session_work_item`,
-  `enable_usage_tracking`, `get_project_cost_summary`, plus the shared
+  `enable_usage_tracking`, `get_my_spend`, `get_my_issue_spend`,
+  `get_my_effectiveness`, `get_my_tracking_status`,
+  `assign_my_session_work_item`, plus the shared
   `get_info`/`register_project`/`put_project_github_info` — the same rows the
   `gloria` server exposes, since Miranda and gloria share one database).
 - **The usage-collector hooks** installed with the Miranda plugin (Claude
@@ -51,6 +53,50 @@ entire cost on the wrong issue. The call is session-local (transcript only,
 no database round-trip), so calling it again costs nothing, and the most
 recent call always wins.
 
+## When cost comes up
+
+The other standing trigger, and the one most sessions will never fire. When
+the user asks what something cost — their own spend, this issue's cost,
+whether the work is getting cheaper — answer from the tools rather than
+estimating, and pick by the question:
+
+- **"What have I been spending?"** → `get_my_spend`. One window (`range`:
+  `7d`, `30d`, `90d` or `month`, `30d` by default), with the prior period and
+  its delta and ranked breakdowns by project, AI tool and model.
+- **"What has this issue cost?"** → `get_my_issue_spend`, with `projectSlug`
+  and the same issue you declared as `workItemRef`. That answer is the
+  issue's **lifetime** cost, not a window's, set against the median of your
+  own closed issues of the same type. Omit `workItemRef` to rank your
+  costliest issues in that project for the range instead.
+- **"Is my work getting cheaper, or better attributed?"** →
+  `get_my_effectiveness` (`30d` or `90d`): cost per closed issue and median
+  cycle time per GitHub issue type, how much of your spend reached an issue
+  at all, cache-hit and output ratios per coding agent, and how much of the
+  spend still booked to a pull request actually merged.
+- **"Is any of this even being recorded?"** → `get_my_tracking_status`: every
+  machine you own and whether its collector is live, stale or silent, plus
+  your recent sessions with no confirmed work item.
+
+Every one of these answers about **you**, the authenticated caller. None takes
+a user argument and none reports the org's numbers or anyone else's, so they
+are safe to call without asking permission. A team or project-wide view is the
+Miranda dashboard's job, not an MCP tool's — point the user there instead of
+trying to assemble one.
+
+**Repair attribution before quoting any of it.** `get_my_tracking_status`
+lists your unattributed and ambiguous sessions, each naming the `projectSlug`
+it needs; call `assign_my_session_work_item` (`projectSlug`, `sessionId`,
+`workItemRef`) on each one, then re-read. You are the only person who can —
+it refuses anyone else's session, an admin's included — and every per-issue
+figure above is only as good as the attribution behind it. A session that has
+already resolved to an issue is reported back as skipped, never overwritten.
+
+**None of them tells you what THIS session has cost so far.** They read what
+the collector has already reported, and the session you are in is still in
+flight. The collector's `gloria-usage session` subcommand will answer that
+locally, with no round-trip, once it ships; until then, say the current
+session's cost isn't available yet rather than estimating it.
+
 ## Setting up usage tracking
 
 The Miranda plugin ships hooks (Claude Code, Codex, OpenCode) that transmit
@@ -82,8 +128,36 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
 - `enable_usage_tracking` — mint a write-only, org-scoped Clerk API key and
   return `{ apiBaseUrl, ingestToken }` for this machine's collector. See
   "Setting up usage tracking".
-- `get_project_cost_summary` — one project's usage cost: totals for a window
-  plus a by-issue breakdown of confirmed, tracked-issue cost.
+- `get_my_spend` — your own spend for a window (`range`:
+  `7d`/`30d`/`90d`/`month`, default `30d`): actual spend with its
+  plans-vs-tokens split, the prior period and its delta, how many days you
+  ran an agent and your average on those days, your heaviest day, and ranked
+  breakdowns by project, AI tool and model. Takes no user argument.
+- `get_my_issue_spend` — one issue's lifetime cost, your own share of it, how
+  many sessions were booked to it, and GitHub's own state, type and
+  timestamps, against the median cost of your own closed issues of that type.
+  Requires `projectSlug`. Pass `workItemRef` for a single issue — `range` is
+  ignored, because an issue's cost is the whole of its life — or omit it to
+  rank your costliest issues in that project for the range.
+- `get_my_effectiveness` — your own effectiveness for `30d` or `90d`,
+  org-wide across every project: per GitHub issue type, issues closed and
+  still open, cost per closed issue and median cycle time; your attribution
+  split (unattributed, ambiguous, or still booked to a pull request rather
+  than an issue); cache-hit and output-to-input ratios for the period and per
+  coding agent; and, of the pull-request-booked spend, what merged versus
+  closed unmerged, the cost per merged pull request, and review comments per
+  merged pull request. One window governs every figure, so it is a
+  within-period rate — use `get_my_issue_spend` for an issue's lifetime cost.
+- `get_my_tracking_status` — takes no arguments. Your machines with what each
+  has cost and whether its collector is live, stale or has never sent a
+  heartbeat, plus your recent sessions with no confirmed work item — their
+  cost, branch, working directory, start time, and the `projectSlug` needed
+  to repair each one.
+- `assign_my_session_work_item` — attach one of your own past sessions to a
+  GitHub issue: `projectSlug`, `sessionId` (as `get_my_tracking_status`
+  reports it) and `workItemRef` (the same three forms
+  `tag_session_work_item` accepts). Self-service only — anyone else's session
+  is refused, an admin's included.
 
 ## First-time and recovery
 
