@@ -191,6 +191,29 @@ rollout file by name and parses it with the Codex parser instead of Claude
 Code's. This is still not empirically confirmed against a live Codex
 install, so treat it as expected-but-unverified rather than a guarantee.
 
+**Windows — required, or nothing is recorded.** Codex's sandbox is selected
+process-wide on Windows (`windows.sandbox`) and child processes inherit it,
+unlike macOS/Linux where Codex sandboxes each command individually. Hook
+commands therefore inherit the restriction, and the collector's state
+directory sits outside any workspace root — so its writes are blocked, and so
+is this skill's own `config.json` write. The failure is silent: hook
+subcommands never exit non-zero by design. The user must add that directory
+as a writable root in `%USERPROFILE%\.codex\config.toml` **before** setup
+runs:
+
+```toml
+[sandbox_workspace_write]
+writable_roots = ['C:\Users\<you>\.config\sandgarden']
+```
+
+TOML single quotes are literal strings, so backslashes stay as typed; double
+quotes would need each one escaped. `C:\Users\<you>\.config\sandgarden` is
+the default — substitute `SANDGARDEN_HOME`, the deprecated `GLORIA_HOME`, or
+`%XDG_CONFIG_HOME%\sandgarden` if any is set, in that precedence order. You
+cannot make this edit on the user's behalf from inside a sandboxed session:
+`~/.codex` is a protected control directory, read-only to the agent even when
+its parent is a writable root.
+
 As a manual fallback (or on a Codex-only machine that hasn't installed the
 plugin), point `notify` in `~/.codex/config.toml` at the collector download
 stub directly:

@@ -96,6 +96,38 @@ codex mcp login miranda                             # in your shell
 Install from the Codex CLI or the ChatGPT desktop app. [Codex's IDE extension
 does not support plugins.](https://learn.chatgpt.com/docs/plugins)
 
+#### Windows: allow writes to the collector's state directory
+
+**Do this before the next step.** On Windows, Codex's sandbox is selected
+process-wide (`windows.sandbox`) and child processes inherit it, so both the
+collector's hooks and the setup skill's own credential write are blocked from
+the collector's state directory — which lives outside any workspace root. The
+symptom is silent: the plugin installs, MCP sign-in succeeds, and no usage
+data is ever recorded.
+
+Add that directory as a writable root in `%USERPROFILE%\.codex\config.toml`
+(the same file you'd use for a `notify` fallback):
+
+```toml
+[sandbox_workspace_write]
+writable_roots = ['C:\Users\<you>\.config\sandgarden']
+```
+
+Use TOML **single** quotes — they're literal strings, so the backslashes stay
+as typed. Double quotes would require escaping every one of them.
+
+`C:\Users\<you>\.config\sandgarden` is the default. If you've set either
+override, use that path instead — the collector resolves its state directory
+in this order:
+
+1. `SANDGARDEN_HOME` — full path, used as-is
+2. `GLORIA_HOME` — full path, deprecated alias of the above
+3. `%XDG_CONFIG_HOME%\sandgarden`
+4. `C:\Users\<you>\.config\sandgarden`
+
+macOS and Linux need no such step: Codex sandboxes each command individually
+there rather than the whole process tree, so hook commands are unaffected.
+
 Now ask your agent:
 
 ```text

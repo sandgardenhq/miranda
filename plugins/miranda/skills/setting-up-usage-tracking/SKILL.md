@@ -156,6 +156,31 @@ step 1):
    organization in Clerk and supply it the same way. Have the user write the
    file themselves — never ask them to paste the secret into the chat.
 
+3. **Verify the write landed — never assume it did.** Read `config.json`
+   back and confirm it parses and carries both keys. A sandboxed agent
+   session can have this write refused: on Codex under Windows the sandbox is
+   process-wide and inherited, and the collector's state directory is outside
+   any workspace root. If the file is absent or unparseable, **do not report
+   tracking as enabled.** Tell the user what to add to
+   `%USERPROFILE%\.codex\config.toml`:
+
+   ```toml
+   [sandbox_workspace_write]
+   writable_roots = ['C:\Users\<you>\.config\sandgarden']
+   ```
+
+   substituting whichever path `collectorHome()` resolves to for them
+   (`SANDGARDEN_HOME` → `GLORIA_HOME` → `%XDG_CONFIG_HOME%\sandgarden` →
+   `C:\Users\<you>\.config\sandgarden`). You cannot apply this edit
+   yourself from a sandboxed session — `~/.codex` is a protected control
+   directory, read-only to the agent even inside a writable root.
+
+   Then say plainly that **the minted credential is gone**: `ingestToken` is
+   shown exactly once, and it was never persisted. After they fix the config,
+   re-run `enable_usage_tracking` with a **fresh, different** `machineLabel` —
+   reusing the previous one collides with the already-minted key and fails
+   with a Clerk `409 token_creation_conflict`.
+
 From the next Claude Code session on, the plugin's hooks report usage
 automatically — and the session-start sweep also collects **Codex and
 OpenCode** usage from this machine's local session stores, so no further
