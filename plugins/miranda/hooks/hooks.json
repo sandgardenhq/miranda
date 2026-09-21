@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop || true"
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-stop }; exit 0"
           }
         ]
       }
@@ -15,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop || true"
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-stop || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-stop }; exit 0"
           }
         ]
       }
@@ -25,7 +27,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && GLORIA_HOOK_SOURCE=miranda sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-session-start || true"
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && GLORIA_HOOK_SOURCE=miranda sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-session-start || true",
+            "commandWindows": "$env:GLORIA_HOOK_SOURCE = 'miranda'; $r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-session-start }; exit 0"
           }
         ]
       }
@@ -36,7 +39,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-post-tool-use || true"
+            "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" ] && sh \"${CLAUDE_PLUGIN_ROOT}/collector/stub.sh\" hook-post-tool-use || true",
+            "commandWindows": "$r = $env:CLAUDE_PLUGIN_ROOT; if (-not $r) { $r = \"${CLAUDE_PLUGIN_ROOT}\" }; if ($r -and (Test-Path \"$r\\collector\\stub.ps1\")) { & powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$r\\collector\\stub.ps1\" hook-post-tool-use }; exit 0"
           }
         ]
       }
