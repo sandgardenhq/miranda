@@ -1,6 +1,6 @@
 ---
 name: setting-up-usage-tracking
-description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), and mints the per-machine usage-collector credential. Idempotent; safe to re-run.
+description: Use when installing the Miranda plugin into a repo ("set up token tracking", "enable usage tracking", "install miranda"), when a repo is missing .miranda/USING-MIRANDA.md or the miranda section in CLAUDE.md/AGENTS.md, or after a Miranda plugin update to refresh a stale doc — copies the canonical USING-MIRANDA.md agent doc into the repo, wires an evergreen Miranda section into the agent instruction files (with the user's permission), and enrols this machine for usage collection. Idempotent; safe to re-run.
 ---
 
 # Setting Up Usage Tracking
@@ -19,8 +19,8 @@ gets collected. Two files carry that:
    evergreen — it names no features, so it never changes across Miranda
    releases; only the doc does.
 
-Then, once those are wired, mint the per-machine collector credential so the
-hooks the Miranda plugin already installed actually start reporting usage.
+Then, once those are wired, enrol this machine so the collector daemon the
+Miranda plugin installs actually starts reporting usage.
 
 Never modify the user's files without showing them exactly what will change
 and getting a yes first.
@@ -59,8 +59,9 @@ commitment the team has made, not a suggestion.
   - `.miranda/USING-MIRANDA.md` — present?
   - `CLAUDE.md`, `AGENTS.md` — which exist, and does each already contain a
     `<!-- miranda:start -->` ... `<!-- miranda:end -->` block?
-  - The collector's `config.json` — present? Look in **both** places, in
-    this order:
+  - **Is this machine already enrolled?** Look for the collector's
+    `config.json`, in **both** places, in this order:
+
     1. `$XDG_CONFIG_HOME/sandgarden/config.json`, defaulting to
        `~/.config/sandgarden/config.json` when `XDG_CONFIG_HOME` is unset;
     2. `~/.gloria/config.json` — the pre-rename location. A machine set up
@@ -68,9 +69,32 @@ commitment the team has made, not a suggestion.
        migrates it automatically on its next run, so this counts as
        "already enabled" too.
 
-    Either one present means usage tracking is already enabled on this
-    machine (per-machine, not per-repo) and step 5 is a no-op — say so
-    rather than re-minting a key.
+    Either one present means usage tracking is already on for this machine
+    (per-machine, not per-repo) and step 5 is a no-op — say so rather than
+    re-minting a key.
+
+    **Richer answer, when the collector binary is reachable:**
+    `daemon status` additionally reports which service supervises the
+    collector and whether a daemon is running. **The binary is not on
+    `PATH`** — nothing puts it there. The plugin's download stub caches it
+    inside the state directory, so invoke it by path, or through the stub:
+
+    ```sh
+    # the stub, which is what every hook uses (works even before the first
+    # download); <plugin> is the installed plugin's root directory
+    sh <plugin>/collector/stub.sh daemon status
+
+    # or the cached binary directly, if one is there already
+    ls ~/.config/sandgarden/bin/     # miranda-collector, or miranda-collector-<version>
+    ~/.config/sandgarden/bin/miranda-collector daemon status
+    ```
+
+    Substitute whichever path `collectorHome()` resolves to (`SANDGARDEN_HOME`
+    → the deprecated `GLORIA_HOME` → `$XDG_CONFIG_HOME/sandgarden` →
+    `~/.config/sandgarden`). `daemon status` always exits 0, so "not
+    enrolled" is not an error. Treat this as extra detail for the report in
+    step 6, not as the enrolment test — the `config.json` check above is the
+    one that has to work on every machine.
 
 ### 2. Propose and ask permission — once
 
@@ -82,7 +106,7 @@ yes/no. Cover only the actions actually needed, e.g.:
   the existing Miranda section in ...");
 - create `AGENTS.md` containing the section, when neither instruction file
   exists;
-- mint a usage-tracking credential for this machine, if not already present.
+- enrol this machine for usage tracking, if it is not already.
 
 If everything is already current, say so and skip to step 6. If the user
 declines the file edits, stop — do not partially apply.
@@ -108,8 +132,36 @@ If neither file exists, create `AGENTS.md` containing only the section
 
 ### 5. Enable token-usage tracking
 
-If the collector has no `config.json` in **either** location (checked in
-step 1):
+Only when step 1 found this machine **unenrolled**.
+
+**Prefer browser enrolment.** Both paths below hand the machine its
+credential without this session ever seeing a secret, which is why they come
+first:
+
+- **Approve the collector's own sign-in prompt.** A daemon running without a
+  credential surfaces a native "Sign in to Miranda" dialog on its first idle
+  start (and at most once a day after that); approving it completes the
+  browser handshake and writes `config.json` itself. Nothing for you to do but
+  tell the user it is waiting for them.
+- **Run the collector's `setup` verb** (by path or through the stub, per step 1
+  — it is not on `PATH`). It prints a miranda.co URL with a short one-time
+  code, opens the browser, and writes the same `config.json` once the user
+  approves the machine while signed in. It also registers the daemon's service
+  if the machine has none.
+
+**Fall back to minting through MCP** — the steps below — for an agent that
+cannot open a browser or drive an interactive terminal, and for a headless
+machine. On a headless machine you can also hand the minted key straight to
+the collector with `setup --token <ingestToken>`, which writes the same
+`config.json` for you rather than you writing it by hand.
+
+**Check before offering one**: `daemon status` (invoked as step 1 describes) is
+how you find out what this build of the collector can do, and a collector
+predating #1227 answers an unrecognised `setup` verb with usage and a non-zero
+exit — go straight to the fallback if so. Whichever path runs, the result is
+the same `config.json` — never do two of them.
+
+#### Fallback: minting the credential through MCP
 
 1. Call the `miranda` MCP tool **`enable_usage_tracking`**, always passing a
    `machineLabel` — never omit it. Clerk key names must be unique per org,
@@ -181,12 +233,12 @@ step 1):
    reusing the previous one collides with the already-minted key and fails
    with a Clerk `409 token_creation_conflict`.
 
-From the next Claude Code session on, the plugin's hooks report usage
-automatically — and the session-start sweep also collects **Codex and
-OpenCode** usage from this machine's local session stores, so no further
-wiring is needed when Claude Code runs here regularly. See
-`USING-MIRANDA.md`'s "Codex, OpenCode, and Cursor" section for per-agent
-notes.
+Collection starts within a minute of that file appearing — the collector
+daemon idles while it is missing and begins the moment it shows up, with no
+restart. The daemon collects **Claude Code, Codex and OpenCode** usage from
+this machine's local session stores whether or not any agent plugin fires, so
+no further wiring is needed. See `USING-MIRANDA.md`'s "Codex, OpenCode, and
+Cursor" section for per-agent notes.
 
 ### 6. Report
 
@@ -202,10 +254,9 @@ changes, e.g. `chore: wire miranda agent doc into instruction files`.
   rest, and mention it.
 - Never touch anything outside the marker block in an instruction file, and
   never edit any other file.
-- Never re-mint a usage-tracking credential when the collector already has a
-  `config.json` in either location from step 1 (including the pre-rename
-  `~/.gloria/config.json`) — offer to add `machineLabel` or rotate only if
-  the user asks.
+- Never re-mint a usage-tracking credential when step 1 found a `config.json`
+  in either location (including the pre-rename `~/.gloria/config.json`). Offer
+  to add `machineLabel` or rotate only if the user asks.
 
 ## When to suggest this skill proactively
 

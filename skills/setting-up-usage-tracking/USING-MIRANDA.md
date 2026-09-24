@@ -186,10 +186,11 @@ the same `Stop`/`SessionStart` hooks Claude Code uses, pointing at the same
 collector. Codex's own hooks documentation describes `Stop` as a genuine
 turn-level event, distinct from `SessionStart`, with a payload shape
 (`session_id`/`transcript_path`/`cwd`) that matches Claude Code's — so once
-that plugin path fires, `hook-stop` handles it correctly: it detects a Codex
-rollout file by name and parses it with the Codex parser instead of Claude
-Code's. This is still not empirically confirmed against a live Codex
-install, so treat it as expected-but-unverified rather than a guarantee.
+that plugin path fires, `hook-stop` handles it correctly: it names the
+rollout file in the trigger it writes, and the daemon detects a Codex rollout
+by name and parses it with the Codex parser instead of Claude Code's. This is
+still not empirically confirmed against a live Codex install, so treat it as
+expected-but-unverified rather than a guarantee.
 
 **Windows — required, or nothing is recorded.** Codex's sandbox is selected
 process-wide on Windows (`windows.sandbox`) and child processes inherit it,
@@ -224,17 +225,20 @@ notify = ["sh", "/path/to/plugins/miranda/collector/stub.sh", "hook-notify"]
 
 `notify` fires on every turn completion and carries a `thread-id` +
 `cwd` JSON payload. `hook-notify` resolves the one rollout file for that
-`thread-id` and syncs only it — the same lightweight, single-file path
-`hook-stop` gives Claude Code, never the full multi-source sweep. A
-malformed payload, or a `thread-id` with no matching rollout file yet (e.g.
-the very first turn of a brand new session), falls back to the full sweep
-automatically, so this is always at least as correct as pointing `notify` at
-`hook-session-start` directly — which still works, just does more work than
-necessary on every turn.
+`thread-id` and tells the collector daemon to ingest it now — the same
+lightweight, single-file trigger `hook-stop` gives Claude Code. A malformed
+payload, or a `thread-id` with no matching rollout file yet (e.g. the very
+first turn of a brand new session), simply triggers nothing: the daemon
+watches Codex's rollout directories itself, so that turn is still collected
+seconds later. Pointing `notify` at `hook-session-start` instead also works
+— it just makes sure a daemon is running without naming a file.
 
 **OpenCode:** the Miranda OpenCode plugin (`.opencode/plugins/miranda.js`)
-wires `session.created` and `session.idle` to trigger the same collector
-sweep — this ships automatically with the plugin, no manual step needed.
+wires `session.created` and `session.idle` to make sure this machine's
+collector daemon is running — this ships automatically with the plugin, no
+manual step needed. OpenCode keeps its sessions in SQLite rather than in a
+transcript file, so there is nothing per-session to name; the daemon watches
+OpenCode's storage directory and collects from it directly.
 
 **Cursor:** the Cursor plugin wires `stop`/`sessionStart`/`sessionEnd` hooks
 too, but they call the collector's `hook-cursor` entrypoint, which is a

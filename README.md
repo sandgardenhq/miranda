@@ -54,7 +54,9 @@ one-time browser sign-in.
 ## Install
 
 Pick your agent. Each command below is run from inside that agent unless
-noted.
+noted. **You do not need a coding-agent plugin at all** — see
+[Install without a coding agent](#install-without-a-coding-agent) for the
+standalone collector, which is the only part Miranda actually requires.
 
 ### Claude Code
 
@@ -208,6 +210,60 @@ usage-collector credential.
 If your org is on a Cursor Team or Enterprise plan, an admin can instead
 import this repo once for everyone: Dashboard → Plugins → Team Marketplaces →
 **Add Marketplace** → **Import from Repo** → `sandgardenhq/miranda`.
+
+## Install without a coding agent
+
+The collector is a standalone background service. Installed this way it needs
+no plugin, no coding agent and — except for the system installers — no
+administrator. Every channel installs the same binary and ends in the same
+place: the collector runs, notices it is not connected to an organization
+yet, and prompts you to sign in (or run `miranda-collector setup`).
+
+| Platform       | Command                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| macOS, Linux   | `curl -fsSL https://miranda.co/install.sh \| sh`                                               |
+| macOS, Linux   | `brew install sandgardenhq/tap/miranda-collector` then `brew services start miranda-collector` |
+| Windows        | `winget install Sandgarden.MirandaCollector`                                                   |
+| Debian, Ubuntu | `sudo dpkg -i miranda-collector_<version>_amd64.deb`                                           |
+| Fedora, RHEL   | `sudo rpm -i miranda-collector-<version>.x86_64.rpm`                                           |
+
+The `.deb` and `.rpm` place the binary and a systemd **user** unit but never
+enable it — that is your call to make, per user:
+
+```sh
+systemctl --user enable --now miranda-collector.service
+loginctl enable-linger "$USER"   # keep collecting while you are logged out
+```
+
+Every artifact — the installers, the `.pkg`, the MSI and the raw binaries —
+is attached to this repository's
+[Releases](https://github.com/sandgardenhq/miranda/releases).
+
+### Fleet installation
+
+`MirandaCollector-<version>.pkg` and `MirandaCollector-<version>.msi` are
+built for management tools. Both install per machine in system context with no
+configuration profile, and neither needs a user to be signed in at install
+time:
+
+- **macOS** (Jamf, Kandji, Intune): push the `.pkg`. It installs the binary,
+  places a global LaunchAgent, and starts the collector in the session of
+  whoever is signed in — or at the next login if nobody is.
+- **Windows** (Intune, SCCM): push the MSI, or run
+  `msiexec /i MirandaCollector-<version>.msi /qn`. It registers a scheduled
+  task that starts the collector at any user's logon, running as that user.
+
+Each user is prompted to sign in the first time the collector runs in their
+session; nothing is collected until they do.
+
+### Managing an installed collector
+
+```sh
+miranda-collector daemon status      # mechanism, running version, connection
+miranda-collector setup              # connect this machine to your org
+miranda-collector daemon install     # register the per-user service
+miranda-collector daemon uninstall   # unregister it
+```
 
 ## Migrating from the gloria marketplace
 
