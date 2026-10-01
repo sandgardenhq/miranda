@@ -25,6 +25,27 @@ Miranda plugin installs actually starts reporting usage.
 Never modify the user's files without showing them exactly what will change
 and getting a yes first.
 
+## What the collector reports
+
+Tell the user this when you propose enrolling a machine (step 2). It is what
+they are consenting to.
+
+- **Always:** token usage per model request (model, token counts,
+  timestamps, session and request ids), a random per-machine id, and this
+  machine's hostname, OS, and architecture. Never message content.
+- **Only if the organization turns it on:** the workflow events below.
+
+**Workflow events — off by default.** Your organization admin can turn workflow collection on for the whole organization in Miranda's settings; until they do, the collector reports token usage exactly as described here and nothing more. When it is on, the collector also reports the **structure, not content**, of each session it already reads: sizes, names, and flags, never a prompt, a reply, a file body, a tool's output, or a full shell command (only its first word and its class). These are the event kinds:
+
+- `session_start`: branch, repository, entrypoint; the directory as a hash
+- `session_end`: why it ended and how long it ran
+- `human_turn`: prompt size and slash-command name, never the prompt
+- `assistant_turn`: model, effort, stop reason and size, never the reply
+- `model_request`: the token counts already reported today
+- `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only
+- `tool_result`: error flag, size, exit code and test counts, never the output
+- `project_facts`: manifest and instruction file names, sizes and hashes
+
 ## The instruction-file section
 
 Insert this text exactly, markers included. The markers are how re-runs find
@@ -106,7 +127,8 @@ yes/no. Cover only the actions actually needed, e.g.:
   the existing Miranda section in ...");
 - create `AGENTS.md` containing the section, when neither instruction file
   exists;
-- enrol this machine for usage tracking, if it is not already.
+- enrol this machine for usage tracking, if it is not already, saying what
+  the collector reports (see "What the collector reports").
 
 If everything is already current, say so and skip to step 6. If the user
 declines the file edits, stop — do not partially apply.
