@@ -126,7 +126,8 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
   outranks every automatically-collected signal. See "Start of every
   session".
 - `enable_usage_tracking` — mint a write-only, org-scoped Clerk API key and
-  return `{ apiBaseUrl, ingestToken }` for this machine's collector. See
+  return it as the `ingestToken` for this machine's collector. The collector
+  needs no base URL; it defaults to `https://gloria.dev`. See
   "Setting up usage tracking".
 - `get_my_spend` — your own spend for a window (`range`:
   `7d`/`30d`/`90d`/`month`, default `30d`): actual spend with its

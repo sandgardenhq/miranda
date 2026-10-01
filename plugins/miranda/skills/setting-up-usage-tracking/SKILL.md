@@ -203,10 +203,13 @@ the same `config.json` — never do two of them.
 
    ```json
    {
-     "apiBaseUrl": "<apiBaseUrl from the tool result>",
      "ingestToken": "<ingestToken from the tool result>"
    }
    ```
+
+   Leave the tool's `apiBaseUrl` out of the file: the collector defaults to
+   `https://gloria.dev`, the only production host. Write it only when it is
+   something else, i.e. a local or dev stack.
 
    **Never echo the `ingestToken` into the conversation, logs, or any other
    file** — write it straight to the config file. The secret is shown
