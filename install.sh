@@ -41,14 +41,14 @@ set -u
 # checksums are the trust anchor, so a substituted release asset fails closed).
 # Each placeholder appears exactly once so that verification cannot pass on a
 # half-stamped file.
-BUILD_VERSION="c31ac6470e26"
-RELEASE_TAG="collector-c31ac6470e26"
+BUILD_VERSION="5e99a6fe785e"
+RELEASE_TAG="collector-5e99a6fe785e"
 RELEASE_REPO="sandgardenhq/miranda"
 ASSET_PREFIX="miranda-collector"
-CHECKSUM_DARWIN_ARM64="077839799bd101fa222fda482c1997c9f6cf52e8921c4bc05d206ce538256ea2"
-CHECKSUM_DARWIN_X64="e7e40442d8f24e7c78d60e496bc1576d55fa2ee4ee885de21906bb7ca2817583"
-CHECKSUM_LINUX_X64="1b4a325487b43a35a1bda7a69ac1b687752e67f14cbee40d22c43dccdf1e96b5"
-CHECKSUM_LINUX_ARM64="c1d71cfc011d28a12de261e49ca039d069d7aaea826dc5deba5550a00da1fff3"
+CHECKSUM_DARWIN_ARM64="074bbad4d37670b5b5dc00daecba845c41e7b5019dd62620787ff17af5848076"
+CHECKSUM_DARWIN_X64="517b11e91f91ee831ce2f0b465ebb941e9c3aae4de13aa5659bab239d22a310d"
+CHECKSUM_LINUX_X64="acb5beef78b60f0450f44b00fe8b7150b08f7e2f7bcc971049287a1b596011a2"
+CHECKSUM_LINUX_ARM64="1a74019c29edb49501134a2f03ed185730c288a2b75c42bf3cf9e0199132b2c6"
 
 CURL_MAX_SECONDS=600
 BINARY_NAME="miranda-collector"

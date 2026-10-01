@@ -276,6 +276,7 @@ session; nothing is collected until they do.
 ```sh
 miranda-collector daemon status      # mechanism, running version, connection
 miranda-collector setup              # connect this machine to your org
+miranda-collector token create --label cloud | pbcopy   # a key for cloud machines; not saved here
 miranda-collector daemon install     # register the per-user service
 miranda-collector daemon uninstall   # unregister it
 ```
