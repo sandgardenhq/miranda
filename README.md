@@ -57,7 +57,7 @@ Token usage per model request (model, token counts, timestamps, session and requ
 - `human_turn`: prompt size and slash-command name, never the prompt
 - `assistant_turn`: model, effort, stop reason and size, never the reply
 - `model_request`: the token counts already reported today
-- `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only
+- `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only, plus the names of any wrappers a hook added to it before it ran (such as `rtk`)
 - `tool_result`: error flag, size, exit code and test counts, never the output
 - `project_facts`: manifest and instruction file names, sizes and hashes
 - `skill_invoked`: skill name and whether it came from a plugin, the project, or the user
@@ -65,7 +65,7 @@ Token usage per model request (model, token counts, timestamps, session and requ
 - `plan_mode`: entering or leaving plan mode, never the plan
 - `compaction`: whether a context compaction was automatic or manual, and the context size before it
 - `vcs_event`: commit, push, PR create or merge, or rebase, with PR and issue numbers only, never a branch, message or remote
-- `hook_fired`: hook name and whether it blocked, never its output
+- `hook_fired`: hook name, the first word of the hook's own command (such as `rtk`), and whether it blocked, never its arguments or output
 - `mcp_tool_call`: MCP server and tool name, never arguments or results
 
 The plugin registers the remote **gloria.dev MCP server** at
