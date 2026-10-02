@@ -11,7 +11,8 @@ Miranda is available two ways, and both apply to you:
 - **MCP tools** on the `miranda` server (`tag_session_work_item`,
   `enable_usage_tracking`, `get_my_spend`, `get_my_issue_spend`,
   `get_my_effectiveness`, `get_my_workflow`, `get_my_tracking_status`,
-  `assign_my_session_work_item`, plus the shared
+  `assign_my_session_work_item`, the managers-only `get_team_effectiveness`,
+  plus the shared
   `get_info`/`register_project`/`put_project_github_info` — the same rows the
   `gloria` server exposes, since Miranda and gloria share one database).
 - **The usage-collector hooks** installed with the Miranda plugin (Claude
@@ -71,8 +72,9 @@ estimating, and pick by the question:
 - **"Is my work getting cheaper, or better attributed?"** →
   `get_my_effectiveness` (`30d` or `90d`): cost per closed issue and median
   cycle time per GitHub issue type, how much of your spend reached an issue
-  at all, cache-hit and output ratios per coding agent, and how much of the
-  spend still booked to a pull request actually merged.
+  at all, spend per coding agent, how much of the spend still booked to a
+  pull request actually merged, and — when the org has turned workflow
+  collection on — your own workflow medians and practice adoption per type.
 - **"How do I work with agents, compared with my team?"** →
   `get_my_workflow` (`30d` or `90d`): per GitHub issue type, your settled
   sessions' medians (human prompts, autonomy, interrupts, active time, tool
@@ -81,16 +83,28 @@ estimating, and pick by the question:
   "not enough closed work" below 5 of your closed items. If the org has not
   turned workflow collection on, it says so and returns no figures — an org
   admin with `settings:manage` can turn it on in Settings.
+- **"How is my team doing, per kind of work?"** (managers only) →
+  `get_team_effectiveness` (`30d` or `90d`): the same scoreboard as Miranda's
+  Effectiveness page, naming each developer — per issue type, closed work,
+  cost per closed, cycle time, prompts and sessions per closed, attributed
+  share and practices adopted, each banded against the team median (never a
+  decimal ratio), "not enough closed work" below 5 closed items, and greyed
+  below 60% attributed share. It needs `settings:manage`; anyone else gets
+  "You do not have access." Off for the org, it says collection is not
+  enabled. For coaching and tooling choices, not a performance rating.
 - **"Is any of this even being recorded?"** → `get_my_tracking_status`: every
   machine you own and whether its collector is live, stale or silent, plus
   your recent sessions with no confirmed work item.
 
-Every one of these answers about **you**, the authenticated caller. None takes
-a user argument and none reports the org's numbers or anyone else's — the one
-team figure, `get_my_workflow`'s band, is an aggregate that never names or
-counts anyone — so they are safe to call without asking permission. A team or project-wide view is the
-Miranda dashboard's job, not an MCP tool's — point the user there instead of
-trying to assemble one.
+Every one of these but `get_team_effectiveness` answers about **you**, the
+authenticated caller. None takes a user argument and none reports the org's
+numbers or anyone else's — the one team figure, `get_my_workflow`'s band, is
+an aggregate that never names or counts anyone — so they are safe to call
+without asking permission. `get_team_effectiveness` is the exception: it
+names developers, so it answers only a caller with `settings:manage`; relay
+it to the manager who asked, not to the team. Any other team or project-wide
+view is the Miranda dashboard's job, not an MCP tool's — point the user there
+instead of trying to assemble one.
 
 **Repair attribution before quoting any of it.** `get_my_tracking_status`
 lists your unattributed and ambiguous sessions, each naming the `projectSlug`
@@ -153,11 +167,15 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
   org-wide across every project: per GitHub issue type, issues closed and
   still open, cost per closed issue and median cycle time; your attribution
   split (unattributed, ambiguous, or still booked to a pull request rather
-  than an issue); cache-hit and output-to-input ratios for the period and per
-  coding agent; and, of the pull-request-booked spend, what merged versus
-  closed unmerged, the cost per merged pull request, and review comments per
-  merged pull request. One window governs every figure, so it is a
-  within-period rate — use `get_my_issue_spend` for an issue's lifetime cost.
+  than an issue); spend, share and requests per coding agent; of the
+  pull-request-booked spend, what merged versus closed unmerged, the cost per
+  merged pull request, and review comments per merged pull request; and a
+  `workflow` section — your own settled sessions' profile medians and
+  practice adoption per issue type, as `get_my_workflow` reports them but
+  without the team band. `workflow` is null, with a not-enabled message, when
+  the org has not turned workflow collection on; every other figure still
+  works. One window governs every figure, so it is a within-period rate — use
+  `get_my_issue_spend` for an issue's lifetime cost.
 - `get_my_workflow` — your own workflow for `30d` or `90d`, per GitHub issue
   type: the medians of your settled sessions' profile (human prompts, tokens
   per prompt, assistant turns per prompt, interrupts, active seconds, tool
@@ -166,6 +184,18 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
   figure. Below 5 of your closed items a type shows "not enough closed work";
   below 3 other developers the band is omitted. Off for the org, it returns
   only a not-enabled message.
+- `get_team_effectiveness` — managers only (`settings:manage`): the org's
+  effectiveness scoreboard for `30d` or `90d`, the same rows, gates, bands and
+  greying as Miranda's Effectiveness page. Per developer (named) × GitHub
+  issue type: closed items and merged pull requests, cost per closed, median
+  cycle time, human prompts, sessions and active hours per closed, review
+  comments per merged pull request, merged and attributed share, and the
+  practices adopted, each per-unit figure banded (well below, below,
+  around, above, well above) against the team median beside the team row it
+  was drawn from. Below 5
+  closed items a row shows "not enough closed work"; under 60% attributed
+  share it is greyed with the reason. Off for the org, it returns only a
+  not-enabled message.
 - `get_my_tracking_status` — takes no arguments. Your machines with what each
   has cost and whether its collector is live, stale or has never sent a
   heartbeat, plus your recent sessions with no confirmed work item — their
