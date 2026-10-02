@@ -10,7 +10,7 @@ Miranda is available two ways, and both apply to you:
 
 - **MCP tools** on the `miranda` server (`tag_session_work_item`,
   `enable_usage_tracking`, `get_my_spend`, `get_my_issue_spend`,
-  `get_my_effectiveness`, `get_my_tracking_status`,
+  `get_my_effectiveness`, `get_my_workflow`, `get_my_tracking_status`,
   `assign_my_session_work_item`, plus the shared
   `get_info`/`register_project`/`put_project_github_info` — the same rows the
   `gloria` server exposes, since Miranda and gloria share one database).
@@ -73,13 +73,22 @@ estimating, and pick by the question:
   cycle time per GitHub issue type, how much of your spend reached an issue
   at all, cache-hit and output ratios per coding agent, and how much of the
   spend still booked to a pull request actually merged.
+- **"How do I work with agents, compared with my team?"** →
+  `get_my_workflow` (`30d` or `90d`): per GitHub issue type, your settled
+  sessions' medians (human prompts, autonomy, interrupts, active time, tool
+  calls and errors) and how often each practice held, against the team's band
+  for the same type. It names nobody: no band below 3 other developers, and
+  "not enough closed work" below 5 of your closed items. If the org has not
+  turned workflow collection on, it says so and returns no figures — an org
+  admin with `settings:manage` can turn it on in Settings.
 - **"Is any of this even being recorded?"** → `get_my_tracking_status`: every
   machine you own and whether its collector is live, stale or silent, plus
   your recent sessions with no confirmed work item.
 
 Every one of these answers about **you**, the authenticated caller. None takes
-a user argument and none reports the org's numbers or anyone else's, so they
-are safe to call without asking permission. A team or project-wide view is the
+a user argument and none reports the org's numbers or anyone else's — the one
+team figure, `get_my_workflow`'s band, is an aggregate that never names or
+counts anyone — so they are safe to call without asking permission. A team or project-wide view is the
 Miranda dashboard's job, not an MCP tool's — point the user there instead of
 trying to assemble one.
 
@@ -149,6 +158,14 @@ Reads need `inventory:read` (any member); writes need `inventory:write`.
   closed unmerged, the cost per merged pull request, and review comments per
   merged pull request. One window governs every figure, so it is a
   within-period rate — use `get_my_issue_spend` for an issue's lifetime cost.
+- `get_my_workflow` — your own workflow for `30d` or `90d`, per GitHub issue
+  type: the medians of your settled sessions' profile (human prompts, tokens
+  per prompt, assistant turns per prompt, interrupts, active seconds, tool
+  calls, tool error rate) and your practice adoption, each against the team
+  band (p25, median, p75) for the same type, with a ready sentence per
+  figure. Below 5 of your closed items a type shows "not enough closed work";
+  below 3 other developers the band is omitted. Off for the org, it returns
+  only a not-enabled message.
 - `get_my_tracking_status` — takes no arguments. Your machines with what each
   has cost and whether its collector is live, stale or has never sent a
   heartbeat, plus your recent sessions with no confirmed work item — their

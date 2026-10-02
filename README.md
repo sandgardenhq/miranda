@@ -40,11 +40,11 @@ collector, and registers the hosted MCP server. (Cursor's marketplace has no
 individual-user self-service install command yet — see its section below for
 the working-today local-plugin install.)
 
-| Component                             | What it does                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Skill** `setting-up-usage-tracking` | Wires `.miranda/USING-MIRANDA.md` and an evergreen instruction-file section into a repo, then mints this machine's usage-collector credential.                                                                                                                                                                                                             |
-| **The usage collector**               | Downloaded and checksum-verified on first hook fire (~50 MB, once per release); reports token usage (model, token counts, timestamps — never message content) plus this machine's hostname, OS, and architecture so you can tell your machines apart.                                                                                                      |
-| **MCP server** `miranda`              | The gloria.dev MCP server's scoped `/miranda` endpoint: `tag_session_work_item`, `enable_usage_tracking`, your own cost reads (`get_my_spend`, `get_my_issue_spend`, `get_my_effectiveness`), attribution repair (`get_my_tracking_status`, `assign_my_session_work_item`), plus project registration. Every cost read answers about you, never your team. |
+| Component                             | What it does                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Skill** `setting-up-usage-tracking` | Wires `.miranda/USING-MIRANDA.md` and an evergreen instruction-file section into a repo, then mints this machine's usage-collector credential.                                                                                                                                                                                                                                             |
+| **The usage collector**               | Downloaded and checksum-verified on first hook fire (~50 MB, once per release); reports token usage (model, token counts, timestamps — never message content) plus this machine's hostname, OS, and architecture so you can tell your machines apart.                                                                                                                                      |
+| **MCP server** `miranda`              | The gloria.dev MCP server's scoped `/miranda` endpoint: `tag_session_work_item`, `enable_usage_tracking`, your own cost and workflow reads (`get_my_spend`, `get_my_issue_spend`, `get_my_effectiveness`, `get_my_workflow`), attribution repair (`get_my_tracking_status`, `assign_my_session_work_item`), plus project registration. Every cost read answers about you, never your team. |
 
 ### What the collector reports
 
@@ -60,6 +60,13 @@ Token usage per model request (model, token counts, timestamps, session and requ
 - `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only
 - `tool_result`: error flag, size, exit code and test counts, never the output
 - `project_facts`: manifest and instruction file names, sizes and hashes
+- `skill_invoked`: skill name and whether it came from a plugin, the project, or the user
+- `subagent_spawned`: subagent type, model override and whether it ran in the background, never its prompt
+- `plan_mode`: entering or leaving plan mode, never the plan
+- `compaction`: whether a context compaction was automatic or manual, and the context size before it
+- `vcs_event`: commit, push, PR create or merge, or rebase, with PR and issue numbers only, never a branch, message or remote
+- `hook_fired`: hook name and whether it blocked, never its output
+- `mcp_tool_call`: MCP server and tool name, never arguments or results
 
 The plugin registers the remote **gloria.dev MCP server** at
 `https://mcp.gloria.dev/miranda` (Streamable HTTP) under the name
