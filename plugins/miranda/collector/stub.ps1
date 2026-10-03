@@ -45,11 +45,11 @@
 # placeholder appears exactly once so the workflow's sed + grep verification
 # can't miss. Only windows-x64 is carried: it is the only asset this file can
 # ever resolve.
-$BuildVersion = '6ecba70eea5a'
-$ReleaseTag = 'collector-6ecba70eea5a'
+$BuildVersion = '02942757e31f'
+$ReleaseTag = 'collector-02942757e31f'
 $ReleaseRepo = 'sandgardenhq/miranda'
 $AssetPrefix = 'miranda-collector'
-$ChecksumWindowsX64 = '60adf8d20669cf5c2c329c7b441ef9924eacaf9b855d8729d296dcba76a40dde'
+$ChecksumWindowsX64 = '35dd0e02b753f0169b81e2a0280ced08a5cf912450f125cce228b44f03ef6315'
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
