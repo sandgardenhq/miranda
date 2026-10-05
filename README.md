@@ -285,7 +285,8 @@ miranda-collector daemon status      # mechanism, running version, connection
 miranda-collector setup              # connect this machine to your org
 miranda-collector token create --label cloud | pbcopy   # a key for cloud machines; not saved here
 miranda-collector daemon install     # register the per-user service
-miranda-collector daemon uninstall   # unregister it
+miranda-collector daemon uninstall   # unregister it (the binary and state stay)
+miranda-collector uninstall          # remove the collector entirely — see Uninstalling
 ```
 
 ## Migrating from the gloria marketplace
@@ -316,6 +317,56 @@ update gloria before or alongside installing this one:
 | OpenAI Codex | `codex plugin marketplace upgrade miranda` (restart Codex)  |
 | OpenCode     | `rm -rf ~/.cache/opencode/node_modules/miranda` and restart |
 | Cursor       | Re-run the [Cursor install commands](#cursor) (pull + copy) |
+
+## Uninstalling
+
+Removing the plugin from your coding agent does not stop the collector: it
+runs as a background service of its own. To remove Miranda from a machine:
+
+1. **Remove the plugin** from each coding agent it is installed in (and the
+   `gloria` plugin too, if you use it — it ships the same collector). While a
+   plugin is installed, its hooks download the collector again at the next
+   session.
+2. **Remove the collector** for your account:
+
+   ```sh
+   miranda-collector uninstall                 # everything, including the credential
+   miranda-collector uninstall --keep-config   # keep config.json, for a reinstall
+   ```
+
+   If you only ever installed the plugin, `miranda-collector` is not on your
+   `PATH`: run the copy the plugin cached instead,
+   `~/.config/sandgarden/bin/miranda-collector uninstall`.
+
+   It stops the daemon, unregisters the per-user service
+   (`~/Library/LaunchAgents/co.miranda.collector.plist` on macOS, the systemd
+   user unit / crontab lines / autostart entry on Linux), and deletes the
+   collector's state directory (`$XDG_CONFIG_HOME/sandgarden`, defaulting to
+   `~/.config/sandgarden` — config, cached binaries, queue, log), the binary
+   `install.sh` put in `~/.local/bin` (or `$MIRANDA_INSTALL_DIR`, if you set it
+   when installing — set it again here), and a legacy `~/.gloria`. It prints
+   every path it removed; running it again reports nothing to remove.
+
+3. **If the `.pkg` was installed** (fleet/MDM — the command above says so when
+   it finds one), remove it as an administrator:
+
+   ```sh
+   sudo miranda-collector uninstall --system
+   ```
+
+   That stops `co.miranda.collector.system` in every signed-in session and
+   removes `/Library/LaunchAgents/co.miranda.collector.system.plist`,
+   `/usr/local/bin/miranda-collector`, `/usr/local/libexec/miranda-collector/`
+   and the `co.miranda.collector` package receipt. Run it after step 2 —
+   it deletes the `miranda-collector` command that step uses.
+
+4. **Revoke the machine's ingest key.** Deleting `config.json` does not
+   deactivate the key: revoke it on [miranda.co](https://miranda.co) under
+   **Account → Collector keys**.
+
+Homebrew installs are removed with `brew services stop miranda-collector`
+and `brew uninstall miranda-collector`. On Windows, remove **Miranda
+Collector** from Settings → Apps.
 
 ## Links
 
