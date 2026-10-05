@@ -45,11 +45,17 @@
 # placeholder appears exactly once so the workflow's sed + grep verification
 # can't miss. Only windows-x64 is carried: it is the only asset this file can
 # ever resolve.
-$BuildVersion = 'f8c092b60eb2'
-$ReleaseTag = 'collector-f8c092b60eb2'
+$BuildVersion = '7bac01bd1468'
+$ReleaseTag = 'collector-7bac01bd1468'
 $ReleaseRepo = 'sandgardenhq/miranda'
 $AssetPrefix = 'miranda-collector'
-$ChecksumWindowsX64 = '49669bd6a0deb2efcd8f1f34d198d277bcedf82bf4553b028d04618b84b5f6bc'
+$ChecksumWindowsX64 = 'ad6b93f6f6236bbe164f9d7a7b05a67582f07af15566903c60ea66568db591ef'
+
+# What `hook-session-start` tells the agent when no collector could be handed
+# to it (#1568) — the PowerShell twin of stub.sh's NOT_INSTALLED_NUDGE, and a
+# copy of COLLECTOR_NOT_INSTALLED_NUDGE in hooks.ts (a test pins them together).
+# No quote characters in the text, so it needs no JSON escaping here.
+$NotInstalledNudge = '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"The usage collector is not installed or could not be set up on this machine, so no token usage is being recorded. Tell the user now: reinstall or update the Miranda plugin and start a new session; the cause is logged in collector.log under ~/.config/sandgarden."}}'
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
@@ -76,6 +82,24 @@ $ProgressPreference = 'SilentlyContinue'
 # return value: a function's return value is its whole success stream, which
 # would swallow the collector's own stdout (hook JSON the agent reads).
 $script:CollectorExitCode = 0
+# Set when a live download lock made this run defer: the winner is installing
+# the binary, so that is not a failure worth telling the agent about.
+$script:DownloadDeferred = $false
+
+# Print the not-installed nudge, for `hook-session-start` only — the one hook
+# whose stdout reaches the agent's context. [Console]::Out rather than
+# Write-Output: callers capture some functions' success stream as a return
+# value (Save-CollectorBinary's), and the nudge must not leak into that.
+# Under `--enrolled-only` (#1566, the gloria plugin) it stays quiet unless this
+# machine has a config.json — stub.sh's nudge_not_installed explains why.
+function Write-NotInstalledNudge([string[]]$Arguments) {
+  if ($Arguments.Count -eq 0 -or $Arguments[0] -ne 'hook-session-start') { return }
+  if ($Arguments -contains '--enrolled-only') {
+    $configPath = [System.IO.Path]::Combine((Get-CollectorHome), 'config.json')
+    if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { return }
+  }
+  [Console]::Out.WriteLine($NotInstalledNudge)
+}
 
 function Get-HomeDirectory {
   if ($env:USERPROFILE) { return $env:USERPROFILE }
@@ -240,7 +264,10 @@ function Save-CollectorBinary([string]$BinPath, [string]$AssetName) {
   }
   $lockPath = [System.IO.Path]::Combine($binDir, '.download.lock')
   # A concurrent session is downloading — silently defer to it.
-  if (-not (Request-DownloadLock $lockPath)) { return $false }
+  if (-not (Request-DownloadLock $lockPath)) {
+    $script:DownloadDeferred = $true
+    return $false
+  }
 
   $temp = "$BinPath.download-$PID-$(Get-Random)"
   $url = "https://github.com/$ReleaseRepo/releases/download/$ReleaseTag/$AssetName"
@@ -332,6 +359,7 @@ function Invoke-CollectorBinary([string]$BinPath, [string[]]$Arguments) {
   $script:CollectorExitCode = 0
   if (-not (Test-Path -LiteralPath $BinPath -PathType Leaf)) {
     Write-CollectorLog "spawn of $BinPath failed: not a file"
+    Write-NotInstalledNudge $Arguments
     return
   }
   try {
@@ -341,6 +369,7 @@ function Invoke-CollectorBinary([string]$BinPath, [string[]]$Arguments) {
     # The PowerShell equivalent of the POSIX 126/127 "couldn't execute that":
     # log it and let the hook succeed anyway.
     Write-CollectorLog "spawn of $BinPath failed: $($_.Exception.Message)"
+    Write-NotInstalledNudge $Arguments
     $script:CollectorExitCode = 0
   }
 }
@@ -368,6 +397,7 @@ function Invoke-Main([string[]]$Arguments) {
   $assetName = Resolve-Asset
   if (-not $assetName) {
     Write-CollectorLog "unsupported platform $script:PlatformLabel; skipping"
+    Write-NotInstalledNudge $Arguments
     return
   }
 
@@ -376,7 +406,10 @@ function Invoke-Main([string[]]$Arguments) {
   if (-not (Test-Path -LiteralPath $binPath -PathType Leaf)) {
     if (-not (Copy-LegacyCachedBinary $binPath)) {
       # Logged inside, or a silent lock deferral.
-      if (-not (Save-CollectorBinary $binPath $assetName)) { return }
+      if (-not (Save-CollectorBinary $binPath $assetName)) {
+        if (-not $script:DownloadDeferred) { Write-NotInstalledNudge $Arguments }
+        return
+      }
     }
   }
 
