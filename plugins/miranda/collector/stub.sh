@@ -49,15 +49,15 @@
 # copy, so two plugins installed on the same machine cache and download
 # distinctly-named binaries under the same shared state directory's bin/
 # without colliding.
-BUILD_VERSION="f2cbb763b4cf"
-RELEASE_TAG="collector-f2cbb763b4cf"
+BUILD_VERSION="aa9440a6461f"
+RELEASE_TAG="collector-aa9440a6461f"
 RELEASE_REPO="sandgardenhq/miranda"
 ASSET_PREFIX="miranda-collector"
-CHECKSUM_DARWIN_ARM64="5e61e65b0a899fd6b772d3b00c65ba05b27db72ad82451d4c3e696ab3c465122"
-CHECKSUM_DARWIN_X64="e6b5ce9287bdc4cad48a80bd47bbdbecf753a410ef5d457470f4632965bd5636"
-CHECKSUM_LINUX_X64="d27c12eed48127fa0a4938d084fc3e3b1ec1e5a26c202372b9fab6e5f9457a6f"
-CHECKSUM_LINUX_ARM64="2f5ec2bdf0d752becfc8de01025f4df137a32eeb8a650396ff8631fd38863fe7"
-CHECKSUM_WINDOWS_X64="80fe4d51d69ee5b6de52b6ca8e72964791c52a1310eec4618a59feae60e735f4"
+CHECKSUM_DARWIN_ARM64="f3b814d82fed0461ae6cc2465921cc9dbbb8f9387a1d15ef82ce1dd620f7c06c"
+CHECKSUM_DARWIN_X64="d476bef1ad103cb23eb33563e33db302c53c6d317b5fb21123bd71fd3c91e161"
+CHECKSUM_LINUX_X64="73d05a6846bed1c04c2879d2eb1a81ba43ccd049ee10c524db34053b63a530a3"
+CHECKSUM_LINUX_ARM64="8f9a0ef6212db7cab66bef72d36a7bc52ceab6e311d2c739f9fa1e5660678f1a"
+CHECKSUM_WINDOWS_X64="cceb43303900cbc83956d7dddc518ccf583b4931cd5fe1d74888d7faaece85b7"
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
