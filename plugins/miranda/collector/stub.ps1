@@ -49,7 +49,7 @@ $BuildVersion = 'f2cbb763b4cf'
 $ReleaseTag = 'collector-f2cbb763b4cf'
 $ReleaseRepo = 'sandgardenhq/miranda'
 $AssetPrefix = 'miranda-collector'
-$ChecksumWindowsX64 = 'a859cdc7d2404049a04f21ccb8ff26b6361eb01f3cd5ce78d5a619f6a519f47e'
+$ChecksumWindowsX64 = '80fe4d51d69ee5b6de52b6ca8e72964791c52a1310eec4618a59feae60e735f4'
 
 # What `hook-session-start` tells the agent when no collector could be handed
 # to it (#1568) — the PowerShell twin of stub.sh's NOT_INSTALLED_NUDGE, and a

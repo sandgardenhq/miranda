@@ -57,7 +57,7 @@ CHECKSUM_DARWIN_ARM64="5e61e65b0a899fd6b772d3b00c65ba05b27db72ad82451d4c3e696ab3
 CHECKSUM_DARWIN_X64="e6b5ce9287bdc4cad48a80bd47bbdbecf753a410ef5d457470f4632965bd5636"
 CHECKSUM_LINUX_X64="d27c12eed48127fa0a4938d084fc3e3b1ec1e5a26c202372b9fab6e5f9457a6f"
 CHECKSUM_LINUX_ARM64="2f5ec2bdf0d752becfc8de01025f4df137a32eeb8a650396ff8631fd38863fe7"
-CHECKSUM_WINDOWS_X64="a859cdc7d2404049a04f21ccb8ff26b6361eb01f3cd5ce78d5a619f6a519f47e"
+CHECKSUM_WINDOWS_X64="80fe4d51d69ee5b6de52b6ca8e72964791c52a1310eec4618a59feae60e735f4"
 
 # A download lock older than this is a downloader that died mid-run: take it
 # over (mirrors the collector's sweep-lock staleness cutoff).
