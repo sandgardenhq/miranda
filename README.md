@@ -1,378 +1,92 @@
 <h1 align="center">Miranda</h1>
 
 <p align="center">
-  <strong>Track coding-agent token cost and attribute it to the GitHub issues it was for.</strong>
+  <strong>This repo has moved to <a href="https://github.com/sandgardenhq/plugins">sandgardenhq/plugins</a>.</strong>
 </p>
 
 ---
 
-This is the plugin marketplace for **[Miranda](https://miranda.co)** —
-Sandgarden's token-cost tracking product, built on [gloria.dev](https://gloria.dev)'s
-platform. One repo serves multiple coding agents —
-[Claude Code](https://code.claude.com/docs/en/plugins),
-[OpenAI Codex](https://learn.chatgpt.com/docs/plugins),
-[OpenCode](https://opencode.ai), and [Cursor](https://cursor.com) — from a
-single published source. Install the `miranda` plugin and your agent gets
-the usage-tracking setup skill, the token-usage collector hooks, and the
-hosted gloria.dev MCP server's scoped `/miranda` tools — no gloria plugin
-required.
-
-> **Extracted from the `gloria` marketplace.** Token-usage tracking used to
-> ship inside the general-purpose [`sandgardenhq/gloria`](https://github.com/sandgardenhq/gloria)
-> plugin. It now lives here so a developer can adopt Miranda without adopting
-> the rest of Gloria. If you previously used the `gloria` plugin's
-> token-usage tracking, install `miranda` here to keep it working — see
-> [Migrating from the gloria marketplace](#migrating-from-the-gloria-marketplace)
-> below.
-
-## What is Miranda?
-
-Miranda tracks coding-agent token usage per machine and attributes cost to
-the GitHub issue the work was actually for, so a team can see what a feature
-or bug fix cost in agent time, not just an undifferentiated total. It shares
-its backend (database, MCP worker, jobs) with gloria.dev — a project
-registered in gloria is already a project in Miranda.
-
-## What's in the `miranda` plugin
-
-Installing the plugin gives your agent the setup skill, wires up the usage
-collector, and registers the hosted MCP server. (Cursor's marketplace has no
-individual-user self-service install command yet — see its section below for
-the working-today local-plugin install.)
-
-| Component                             | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Skill** `setting-up-usage-tracking` | Wires `.miranda/USING-MIRANDA.md` and an evergreen instruction-file section into a repo, then mints this machine's usage-collector credential.                                                                                                                                                                                                                                                                                                                                    |
-| **The usage collector**               | Downloaded and checksum-verified on first hook fire (~50 MB, once per release); reports token usage (model, token counts, timestamps — never message content) plus this machine's hostname, OS, and architecture so you can tell your machines apart.                                                                                                                                                                                                                             |
-| **MCP server** `miranda`              | The gloria.dev MCP server's scoped `/miranda` endpoint: `tag_session_work_item`, `enable_usage_tracking`, your own cost and workflow reads (`get_my_spend`, `get_my_issue_spend`, `get_my_effectiveness`, `get_my_workflow`), attribution repair (`get_my_tracking_status`, `assign_my_session_work_item`), the managers-only team scoreboard (`get_team_effectiveness`, `settings:manage`), plus project registration. Every `get_my_*` read answers about you, never your team. |
-
-### What the collector reports
-
-Token usage per model request (model, token counts, timestamps, session and request ids), a random per-machine id, and this machine's hostname, OS, and architecture. Never message content.
-
-**Workflow events — off by default.** Your organization admin can turn workflow collection on for the whole organization in Miranda's settings; until they do, the collector reports token usage exactly as described here and nothing more. When it is on, the collector also reports the **structure, not content**, of each session it already reads: sizes, names, and flags, never a prompt, a reply, a file body, a tool's output, or a full shell command (only its first word and its class). These are the event kinds:
-
-- `session_start`: branch, repository, entrypoint; the directory as a hash
-- `session_end`: why it ended and how long it ran
-- `human_turn`: prompt size and slash-command name, never the prompt
-- `assistant_turn`: model, effort, stop reason and size, never the reply
-- `model_request`: the token counts already reported today
-- `tool_call`: tool name, argument names, repo-relative file path, and a shell command's first word only, plus the names of any wrappers a hook added to it before it ran (such as `rtk`)
-- `tool_result`: error flag, size, exit code and test counts, never the output
-- `project_facts`: manifest and instruction file names, sizes and hashes
-- `skill_invoked`: skill name and whether it came from a plugin, the project, or the user
-- `subagent_spawned`: subagent type, model override and whether it ran in the background, never its prompt
-- `plan_mode`: entering or leaving plan mode, never the plan
-- `compaction`: whether a context compaction was automatic or manual, and the context size before it
-- `vcs_event`: commit, push, PR create or merge, or rebase, with PR and issue numbers only, never a branch, message or remote
-- `hook_fired`: hook name, the first word of the hook's own command (such as `rtk`), and whether it blocked, never its arguments or output
-- `mcp_tool_call`: MCP server and tool name, never arguments or results
-
-The plugin registers the remote **gloria.dev MCP server** at
-`https://mcp.gloria.dev/miranda` (Streamable HTTP) under the name
-**miranda**. The server is OAuth-protected; the first request triggers a
-one-time browser sign-in.
+The `miranda` plugin now ships from the **`sandgarden`** marketplace at **[sandgardenhq/plugins](https://github.com/sandgardenhq/plugins)**, together with gloria, miranda, and doc-holiday. This repo is no longer updated and will be archived.
 
 ## Install
 
-Pick your agent. Each command below is run from inside that agent unless
-noted. **You do not need a coding-agent plugin at all** — see
-[Install without a coding agent](#install-without-a-coding-agent) for the
-standalone collector, which is the only part Miranda actually requires.
+Run each command from inside the agent unless noted.
 
 ### Claude Code
 
 ```text
-/plugin marketplace add sandgardenhq/miranda
-/plugin install miranda@miranda
-/mcp                       # complete sign-in for the "miranda" server
+/plugin marketplace add sandgardenhq/plugins
+/plugin install miranda@sandgarden
 ```
-
-The first command registers this marketplace; the second installs the
-`miranda` plugin (its skill, collector hooks, and the scoped gloria.dev MCP
-server). If the install summary says `Run /reload-plugins to activate.`, run
-that. `/mcp` completes the one-time OAuth sign-in.
-
-Now ask your agent:
-
-```text
-Set up usage tracking in this repo
-```
-
-That invokes the `setting-up-usage-tracking` skill, which wires
-`.miranda/USING-MIRANDA.md` into your project and mints this machine's
-usage-collector credential.
 
 ### OpenAI Codex
 
 ```bash
-codex plugin marketplace add sandgardenhq/miranda   # in your shell
+codex plugin marketplace add sandgardenhq/plugins   # in your shell
 ```
 
-Then, inside Codex, run `/plugins` and install **miranda**, and start a new
-session — a plugin's skills and tools load at session start. Finally,
-complete the one-time OAuth handshake with the remote MCP server:
+Then, inside Codex, run `/plugins`, install `miranda`, and start a new session. Finally, complete the one-time OAuth handshake for the plugin's MCP server:
 
 ```bash
-codex mcp login miranda                             # in your shell
+codex mcp login miranda   # in your shell
 ```
-
-Install from the Codex CLI or the ChatGPT desktop app. [Codex's IDE extension
-does not support plugins.](https://learn.chatgpt.com/docs/plugins)
-
-#### Windows: allow writes to the collector's state directory
-
-**Do this before the next step.** On Windows, Codex's sandbox is selected
-process-wide (`windows.sandbox`) and child processes inherit it, so both the
-collector's hooks and the setup skill's own credential write are blocked from
-the collector's state directory — which lives outside any workspace root. The
-symptom is silent: the plugin installs, MCP sign-in succeeds, and no usage
-data is ever recorded.
-
-Add that directory as a writable root in `%USERPROFILE%\.codex\config.toml`
-(the same file you'd use for a `notify` fallback):
-
-```toml
-[sandbox_workspace_write]
-writable_roots = ['C:\Users\<you>\.config\sandgarden']
-```
-
-Use TOML **single** quotes — they're literal strings, so the backslashes stay
-as typed. Double quotes would require escaping every one of them.
-
-`C:\Users\<you>\.config\sandgarden` is the default. If you've set either
-override, use that path instead — the collector resolves its state directory
-in this order:
-
-1. `SANDGARDEN_HOME` — full path, used as-is
-2. `GLORIA_HOME` — full path, deprecated alias of the above
-3. `%XDG_CONFIG_HOME%\sandgarden`
-4. `C:\Users\<you>\.config\sandgarden`
-
-macOS and Linux need no such step: Codex sandboxes each command individually
-there rather than the whole process tree, so hook commands are unaffected.
-
-Now ask your agent:
-
-```text
-Set up usage tracking in this repo
-```
-
-That invokes the `setting-up-usage-tracking` skill, which wires
-`.miranda/USING-MIRANDA.md` into your project and mints this machine's
-usage-collector credential.
 
 ### OpenCode
 
-OpenCode has no marketplace — add Miranda as a plugin in your `opencode.json`
-(global `~/.config/opencode/opencode.json` or a project-local
-`opencode.json`), then restart OpenCode:
+Add the plugin to your `opencode.json`, then restart OpenCode:
 
 ```json
-{ "plugin": ["miranda@git+https://github.com/sandgardenhq/miranda.git"] }
+{ "plugin": ["@sandgarden/miranda"] }
 ```
-
-OpenCode installs the plugin, which registers the setup skill, the scoped
-MCP server, and the collector sweep on session start/idle. The first MCP
-call opens a one-time browser sign-in — follow OpenCode's own MCP auth
-prompt. Pin a version with a git ref (`…/miranda.git#v0.1.0`).
-
-Now ask your agent:
-
-```text
-Set up usage tracking in this repo
-```
-
-That invokes the `setting-up-usage-tracking` skill, which wires
-`.miranda/USING-MIRANDA.md` into your project and mints this machine's
-usage-collector credential.
 
 ### Cursor
 
-Cursor shipped its own plugin marketplace in February 2026 (Cursor 2.5), and
-this repo ships a real Cursor plugin (`.cursor-plugin/`) bundling the same
-skill and MCP server as the Claude/Codex plugin. Cursor has no
-individual-user self-service "add a marketplace repo" command yet, so clone
-this repo and copy the plugin into Cursor's local plugins directory. Re-run
-the same commands to update:
-
 ```bash
-git -C ~/.cursor/plugins/sources/miranda pull || git clone https://github.com/sandgardenhq/miranda.git ~/.cursor/plugins/sources/miranda
+git -C ~/.cursor/plugins/sources/sandgarden pull || git clone https://github.com/sandgardenhq/plugins.git ~/.cursor/plugins/sources/sandgarden
 mkdir -p ~/.cursor/plugins/local
 rm -rf ~/.cursor/plugins/local/miranda
-cp -R ~/.cursor/plugins/sources/miranda/plugins/miranda ~/.cursor/plugins/local/miranda
+cp -R ~/.cursor/plugins/sources/sandgarden/plugins/miranda ~/.cursor/plugins/local/miranda
 ```
 
-Copy rather than symlink. [Cursor's docs recommend a
-symlink](https://cursor.com/docs/plugins), but Cursor does not load a
-symlinked local plugin — see [cursor/plugins#35](https://github.com/cursor/plugins/issues/35),
-still open. A real directory works.
+Copy rather than symlink: Cursor does not load a symlinked local plugin (see [cursor/plugins#35](https://github.com/cursor/plugins/issues/35)). Restart Cursor or run **Developer: Reload Window**.
 
-Restart Cursor or run **Developer: Reload Window**, then open Cursor's
-Customize sidebar and enable **miranda** if it isn't already on. The first MCP
-call opens a one-time browser sign-in.
+## Already installed from this repo? Switch over
 
-On a Team or Enterprise plan, Cursor discovers a local plugin only while
-**Allow Local Plugin Imports** is on (Dashboard → Settings → Security &
-Identity → Marketplace and Plugins); it is off by default on Enterprise.
+- **Claude Code:** remove the old `miranda` marketplace, then install from `sandgarden` as above:
 
-Note: Cursor's hooks are wired but currently report no usage data — Cursor's
-local session storage doesn't carry reliable token counts yet.
+  ```text
+  /plugin marketplace remove miranda
+  ```
 
-Now ask your agent:
+- **OpenAI Codex:** remove the old `miranda` marketplace, then install from `sandgarden` as above:
 
-```text
-Set up usage tracking in this repo
-```
+  ```bash
+  codex plugin marketplace remove miranda   # in your shell
+  ```
 
-That invokes the `setting-up-usage-tracking` skill, which wires
-`.miranda/USING-MIRANDA.md` into your project and mints this machine's
-usage-collector credential.
+- **OpenCode:** in `opencode.json`, replace `miranda@git+https://github.com/sandgardenhq/miranda.git` with `@sandgarden/miranda`, clear OpenCode's plugin cache, and restart OpenCode:
 
-If your org is on a Cursor Team or Enterprise plan, an admin can instead
-import this repo once for everyone: Dashboard → Plugins → Team Marketplaces →
-**Add Marketplace** → **Import from Repo** → `sandgardenhq/miranda`.
+  ```bash
+  rm -rf ~/.cache/opencode/node_modules
+  ```
 
-## Install without a coding agent
+- **Cursor:** delete the old symlink or copy and the old clone, then follow the [Cursor install steps](#cursor):
 
-The collector is a standalone background service. Installed this way it needs
-no plugin, no coding agent and — except for the system installers — no
-administrator. Every channel installs the same binary and ends in the same
-place: the collector runs, notices it is not connected to an organization
-yet, and prompts you to sign in (or run `miranda-collector setup`).
+  ```bash
+  rm -rf ~/.cursor/plugins/local/miranda ~/.cursor/plugins/sources/miranda
+  ```
 
-| Platform       | Command                                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| macOS, Linux   | `curl -fsSL https://miranda.co/install.sh \| sh`                                               |
-| macOS, Linux   | `brew install sandgardenhq/tap/miranda-collector` then `brew services start miranda-collector` |
-| Windows        | `winget install Sandgarden.MirandaCollector`                                                   |
-| Debian, Ubuntu | `sudo dpkg -i miranda-collector_<version>_amd64.deb`                                           |
-| Fedora, RHEL   | `sudo rpm -i miranda-collector-<version>.x86_64.rpm`                                           |
+## The usage collector
 
-The `.deb` and `.rpm` place the binary and a systemd **user** unit but never
-enable it — that is your call to make, per user:
+- **Standalone installer:** `curl -fsSL https://miranda.co/install.sh | sh` now serves the installer from `sandgardenhq/plugins`.
+- **Releases:** collector binaries and installers are published at [sandgardenhq/plugins/releases](https://github.com/sandgardenhq/plugins/releases).
 
-```sh
-systemctl --user enable --now miranda-collector.service
-loginctl enable-linger "$USER"   # keep collecting while you are logged out
-```
+## Learn more
 
-Every artifact — the installers, the `.pkg`, the MSI and the raw binaries —
-is attached to this repository's
-[Releases](https://github.com/sandgardenhq/miranda/releases).
+- Full install guide, for every agent and plugin: <https://github.com/sandgardenhq/plugins#readme>
+- Miranda: <https://miranda.co>
 
-### Fleet installation
-
-`MirandaCollector-<version>.pkg` and `MirandaCollector-<version>.msi` are
-built for management tools. Both install per machine in system context with no
-configuration profile, and neither needs a user to be signed in at install
-time:
-
-- **macOS** (Jamf, Kandji, Intune): push the `.pkg`. It installs the binary,
-  places a global LaunchAgent, and starts the collector in the session of
-  whoever is signed in — or at the next login if nobody is.
-- **Windows** (Intune, SCCM): push the MSI, or run
-  `msiexec /i MirandaCollector-<version>.msi /qn`. It registers a scheduled
-  task that starts the collector at any user's logon, running as that user.
-
-Each user is prompted to sign in the first time the collector runs in their
-session; nothing is collected until they do.
-
-### Managing an installed collector
-
-```sh
-miranda-collector daemon status      # mechanism, running version, connection
-miranda-collector setup              # connect this machine to your org
-miranda-collector token create --label cloud | pbcopy   # a key for cloud machines; not saved here
-miranda-collector daemon install     # register the per-user service
-miranda-collector daemon uninstall   # unregister it (the binary and state stay)
-miranda-collector uninstall          # remove the collector entirely — see Uninstalling
-```
-
-## Migrating from the gloria marketplace
-
-Token-usage tracking (the `enable_usage_tracking`/`tag_session_work_item`
-setup flow, the collector hooks) previously shipped inside the `gloria`
-plugin. A gloria install predating this extraction keeps working as-is until
-it's updated — the two plugins must not both run the collector at once, so
-update gloria before or alongside installing this one:
-
-1. Update your `gloria` plugin install — after the extraction it no longer
-   bundles the collector or its hooks.
-2. Add this marketplace and install `miranda` using the
-   [Install](#install) commands for your agent.
-3. Run `setting-up-usage-tracking` (or ask your agent to "set up usage
-   tracking") to re-wire the credential — the same `config.json` both plugins
-   share (in `$XDG_CONFIG_HOME/sandgarden`, defaulting to
-   `~/.config/sandgarden`), so if it already exists nothing needs re-minting.
-   A machine set up before that directory was renamed still has its
-   credential in `~/.gloria/`; the collector copies it across automatically
-   on its next run, so that counts as already-enabled too.
-
-## Updating
-
-| Agent        | Command                                                     |
-| ------------ | ----------------------------------------------------------- |
-| Claude Code  | `/plugin marketplace update miranda` then `/reload-plugins` |
-| OpenAI Codex | `codex plugin marketplace upgrade miranda` (restart Codex)  |
-| OpenCode     | `rm -rf ~/.cache/opencode/node_modules/miranda` and restart |
-| Cursor       | Re-run the [Cursor install commands](#cursor) (pull + copy) |
-
-## Uninstalling
-
-Removing the plugin from your coding agent does not stop the collector: it
-runs as a background service of its own. To remove Miranda from a machine:
-
-1. **Remove the plugin** from each coding agent it is installed in (and the
-   `gloria` plugin too, if you use it — it ships the same collector). While a
-   plugin is installed, its hooks download the collector again at the next
-   session.
-2. **Remove the collector** for your account:
-
-   ```sh
-   miranda-collector uninstall                 # everything, including the credential
-   miranda-collector uninstall --keep-config   # keep config.json, for a reinstall
-   ```
-
-   If you only ever installed the plugin, `miranda-collector` is not on your
-   `PATH`: run the copy the plugin cached instead,
-   `~/.config/sandgarden/bin/miranda-collector uninstall`.
-
-   It stops the daemon, unregisters the per-user service
-   (`~/Library/LaunchAgents/co.miranda.collector.plist` on macOS, the systemd
-   user unit / crontab lines / autostart entry on Linux), and deletes the
-   collector's state directory (`$XDG_CONFIG_HOME/sandgarden`, defaulting to
-   `~/.config/sandgarden` — config, cached binaries, queue, log), the binary
-   `install.sh` put in `~/.local/bin` (or `$MIRANDA_INSTALL_DIR`, if you set it
-   when installing — set it again here), and a legacy `~/.gloria`. It prints
-   every path it removed; running it again reports nothing to remove.
-
-3. **If the `.pkg` was installed** (fleet/MDM — the command above says so when
-   it finds one), remove it as an administrator:
-
-   ```sh
-   sudo miranda-collector uninstall --system
-   ```
-
-   That stops `co.miranda.collector.system` in every signed-in session and
-   removes `/Library/LaunchAgents/co.miranda.collector.system.plist`,
-   `/usr/local/bin/miranda-collector`, `/usr/local/libexec/miranda-collector/`
-   and the `co.miranda.collector` package receipt. Run it after step 2 —
-   it deletes the `miranda-collector` command that step uses.
-
-4. **Revoke the machine's ingest key.** Deleting `config.json` does not
-   deactivate the key: revoke it on [miranda.co](https://miranda.co) under
-   **Account → Collector keys**.
-
-Homebrew installs are removed with `brew services stop miranda-collector`
-and `brew uninstall miranda-collector`. On Windows, remove **Miranda
-Collector** from Settings → Apps.
-
-## Links
-
-- Miranda — <https://miranda.co>
-- gloria.dev — <https://gloria.dev>
-- MCP server — <https://mcp.gloria.dev/miranda>
+<sub>Maintainers: `collector/manifest.json` in this repo is still updated automatically so older collectors keep self-updating. Don't delete it.</sub>
 
 ---
 
